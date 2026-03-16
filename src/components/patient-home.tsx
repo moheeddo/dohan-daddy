@@ -10,6 +10,8 @@ import { DailyRecordForm } from '@/components/daily-record-form'
 import { AppointmentManager } from '@/components/appointment-manager'
 import { InfoHub } from '@/components/info-hub'
 import { VisitSummary } from '@/components/visit-summary'
+import { DataBackup } from '@/components/data-backup'
+import { MedicationTimer } from '@/components/medication-timer'
 import {
   getDailyRecordByDate,
   getRecentDailyRecords,
@@ -294,7 +296,7 @@ function BottomTabBar({ activeTab, onTabChange }: { activeTab: ViewType; onTabCh
 }
 
 // ─── 메인 ──────────────────────────────
-type ViewType = 'home' | 'record' | 'info' | 'appointment' | 'summary'
+type ViewType = 'home' | 'record' | 'info' | 'appointment' | 'summary' | 'backup'
 
 export function PatientHome() {
   const { user, logout } = useAuth()
@@ -405,6 +407,14 @@ export function PatientHome() {
       </div>
     )
   }
+  if (view === 'backup') {
+    return (
+      <div className="pb-20">
+        <DataBackup onBack={() => { setView('home'); loadData() }} />
+        <BottomTabBar activeTab={'home'} onTabChange={(tab) => { setView(tab); loadData() }} />
+      </div>
+    )
+  }
 
   // ─── 홈 ───
   return (
@@ -496,6 +506,13 @@ export function PatientHome() {
           </CardContent>
         </Card>
 
+        {/* 약 복용 타이머 */}
+        <Card className="shadow-sm">
+          <CardContent className="pt-4 pb-3">
+            <MedicationTimer />
+          </CardContent>
+        </Card>
+
         {/* 운동 / 진료 */}
         <div className="grid grid-cols-2 gap-3">
           <Card
@@ -569,6 +586,19 @@ export function PatientHome() {
             전 세계에서 M. abscessus 치료법이 빠르게 발전하고 있습니다
           </p>
         </div>
+
+        {/* 데이터 백업 */}
+        <button
+          onClick={() => setView('backup')}
+          className="w-full bg-gray-50 rounded-2xl border border-gray-200 px-5 py-3 flex items-center gap-3 active:bg-gray-100 transition text-left"
+        >
+          <span className="text-2xl">💾</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-semibold text-gray-700">데이터 백업</p>
+            <p className="text-xs text-gray-400">기록을 안전하게 보관하세요</p>
+          </div>
+          <span className="text-gray-300 text-lg">→</span>
+        </button>
       </div>
 
       {/* 운동 바텀시트 */}
