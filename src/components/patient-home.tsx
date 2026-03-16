@@ -138,6 +138,68 @@ function WeeklyChart({ records, onTap }: { records: DailyRecord[]; onTap: () => 
   )
 }
 
+// ─── 빠른 메모 ──────────────────
+function QuickMemo({ userId }: { userId: string }) {
+  const [memo, setMemo] = useState('')
+  const [saved, setSaved] = useState(false)
+  const today = getTodayString()
+
+  const handleSave = () => {
+    if (!memo.trim()) return
+    // 기존 기록에 메모 추가
+    const existing = getDailyRecordByDate(today)
+    if (existing) {
+      const newNotes = existing.notes ? `${existing.notes}\n${memo.trim()}` : memo.trim()
+      saveDailyRecord({ ...existing, notes: newNotes })
+    } else {
+      // 기록이 없으면 기본값으로 새 기록 생성 + 메모
+      saveDailyRecord({
+        user_id: userId,
+        date: today,
+        overall_condition: 2,
+        cough_level: 3,
+        sputum_amount: 3,
+        sputum_color: 'clear',
+        breathing_difficulty: 2,
+        fatigue_level: 3,
+        dumping_symptom: false,
+        mood: 3,
+        notes: memo.trim(),
+      })
+    }
+    haptic('light')
+    setSaved(true)
+    setMemo('')
+    setTimeout(() => setSaved(false), 1500)
+  }
+
+  return (
+    <div className="flex gap-2">
+      <input
+        type="text"
+        value={memo}
+        onChange={e => setMemo(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && handleSave()}
+        placeholder="오늘 특이사항을 메모하세요..."
+        className="flex-1 h-12 px-4 rounded-2xl bg-white border border-gray-200 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 shadow-sm"
+      />
+      <button
+        onClick={handleSave}
+        disabled={!memo.trim()}
+        className={`h-12 px-5 rounded-2xl text-base font-bold transition-all active:scale-95 flex-shrink-0 ${
+          saved
+            ? 'bg-emerald-500 text-white'
+            : memo.trim()
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-300'
+        }`}
+      >
+        {saved ? '✓' : '저장'}
+      </button>
+    </div>
+  )
+}
+
 // ─── 빠른 운동 입력 바텀시트 ──────────────────
 const QUICK_EXERCISES: { type: ExerciseType; label: string; emoji: string }[] = [
   { type: 'walking', label: '걷기', emoji: '🚶' },
@@ -525,6 +587,9 @@ export function PatientHome() {
             {todayRecord ? '기록 수정하기' : '오늘의 건강 기록하기'}
           </Button>
         </div>
+
+        {/* 빠른 메모 */}
+        <QuickMemo userId={user?.id || ''} />
 
         {/* 이번 주 컨디션 (클릭 → 기록) */}
         <Card className="shadow-sm">

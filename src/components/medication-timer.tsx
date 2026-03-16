@@ -40,8 +40,39 @@ export function MedicationTimer() {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000)
+    const timer = setInterval(() => {
+      setNow(new Date())
+      // 매 분마다 약 복용 알림 체크
+      checkMedNotifications()
+    }, 60000)
     return () => clearInterval(timer)
+  }, [])
+
+  // 약 복용 시간에 브라우저 알림
+  const checkMedNotifications = useCallback(() => {
+    if (typeof window === 'undefined') return
+    if (!('Notification' in window) || Notification.permission !== 'granted') return
+
+    const currentMeds = loadTodayMeds()
+    const now = new Date()
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+
+    currentMeds.forEach(med => {
+      if (med.taken) return
+      // 정확히 약 복용 시간이거나 5분 후일 때 알림
+      if (med.hour === currentHour && (currentMinute === med.minute || currentMinute === med.minute + 5)) {
+        const notifKey = `med_notif_${med.id}_${now.toISOString().split('T')[0]}_${currentMinute}`
+        if (!sessionStorage.getItem(notifKey)) {
+          new Notification(`💊 ${med.label} 시간이에요!`, {
+            body: '지금 약을 복용해주세요',
+            icon: '/icon-192.png',
+            tag: med.id,
+          })
+          sessionStorage.setItem(notifKey, 'true')
+        }
+      }
+    })
   }, [])
 
   const handleTaken = useCallback((id: string) => {
