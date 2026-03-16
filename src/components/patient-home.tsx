@@ -12,6 +12,7 @@ import { InfoHub } from '@/components/info-hub'
 import { VisitSummary } from '@/components/visit-summary'
 import { DataBackup } from '@/components/data-backup'
 import { MedicationTimer } from '@/components/medication-timer'
+import { haptic } from '@/lib/haptic'
 import {
   getDailyRecordByDate,
   getRecentDailyRecords,
@@ -334,6 +335,7 @@ export function PatientHome() {
   // 빠른 컨디션 입력 (홈에서 바로 3초 기록)
   const handleQuickCondition = (condition: number) => {
     if (!user) return
+    haptic('success')
     const today = getTodayString()
     const existing = getDailyRecordByDate(today)
     saveDailyRecord({

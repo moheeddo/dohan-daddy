@@ -23,6 +23,46 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar,
 } from 'recharts'
 
+// 관리자용 약 복용 현황 (읽기 전용)
+function MedicationStatus() {
+  const todayKey = `med_taken_${new Date().toISOString().split('T')[0]}`
+  let meds: { id: string; label: string; hour: number; minute: number; taken: boolean; takenAt?: string }[] = []
+  try {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(todayKey) : null
+    if (saved) meds = JSON.parse(saved)
+  } catch { /* ignore */ }
+
+  if (meds.length === 0) {
+    return <p className="text-gray-400 text-sm text-center py-2">아직 약 복용 기록이 없습니다</p>
+  }
+
+  const takenCount = meds.filter(m => m.taken).length
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 mb-1">
+        <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${takenCount === meds.length ? 'bg-emerald-500' : 'bg-amber-400'}`}
+            style={{ width: `${(takenCount / meds.length) * 100}%` }}
+          />
+        </div>
+        <span className="text-sm font-bold text-gray-700">{takenCount}/{meds.length}</span>
+      </div>
+      {meds.map(med => (
+        <div key={med.id} className="flex items-center justify-between text-sm">
+          <span className="flex items-center gap-2">
+            <span className={med.taken ? 'text-emerald-500' : 'text-gray-300'}>{med.taken ? '✓' : '○'}</span>
+            <span className={med.taken ? 'text-gray-700' : 'text-gray-400'}>{med.label}</span>
+          </span>
+          <span className="text-gray-400">
+            {med.taken && med.takenAt ? med.takenAt : `${String(med.hour).padStart(2, '0')}:${String(med.minute).padStart(2, '0')}`}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 type ViewType = 'dashboard' | 'trends' | 'timeline' | 'articles' | 'appointments' | 'info'
 
 function AlertBanner({ records }: { records: DailyRecord[] }) {
@@ -259,6 +299,19 @@ export function CaregiverHome() {
                 ) : (
                   <p className="text-gray-400 text-center py-4">식단 기록 없음</p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* 약 복용 현황 */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <span>💊</span>
+                  <span>오늘 약 복용</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MedicationStatus />
               </CardContent>
             </Card>
 

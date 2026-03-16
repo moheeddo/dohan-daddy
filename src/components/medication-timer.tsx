@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { haptic } from '@/lib/haptic'
 
 interface MedTime {
   id: string
@@ -44,6 +45,7 @@ export function MedicationTimer() {
   }, [])
 
   const handleTaken = useCallback((id: string) => {
+    haptic('success')
     setMeds(prev => {
       const next = prev.map(m =>
         m.id === id ? { ...m, taken: true, takenAt: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) } : m
