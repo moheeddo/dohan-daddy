@@ -100,6 +100,25 @@ export function VisitSummary({ onBack }: VisitSummaryProps) {
   if (highTemp.length > 0) warnings.push(`37.5°C 이상 ${highTemp.length}회`)
   if (avgBreathing >= 5) warnings.push(`평균 호흡곤란 ${avgBreathing}/10`)
 
+  const generateTextSummary = () => {
+    let text = `[건강 기록 요약]\n`
+    text += `기간: ${firstDate} ~ ${lastDate} (${records.length}일 기록)\n\n`
+    if (warnings.length > 0) {
+      text += `주의사항:\n${warnings.map(w => `- ${w}`).join('\n')}\n\n`
+    }
+    text += `증상 평균:\n`
+    text += `- 기침: ${avgCough}/10\n- 가래: ${avgSputum}/10\n- 호흡곤란: ${avgBreathing}/10\n- 피로: ${avgFatigue}/10\n`
+    text += `- 전체 컨디션: ${avgCondition}/3\n\n`
+    text += `컨디션 분포: 좋음 ${condGood}일 / 보통 ${condOk}일 / 안좋음 ${condBad}일\n`
+    text += `덤핑 증상: ${dumpingDays}일 / ${records.length}일\n`
+    if (weightFirst && weightLast) {
+      text += `체중: ${weightFirst}kg → ${weightLast}kg (${weightChange! > 0 ? '+' : ''}${weightChange!.toFixed(1)}kg)\n`
+    }
+    text += `운동: ${exerciseDays}일, 총 ${totalExerciseMinutes}분\n`
+    text += `\n* 환자가 직접 기록한 주관적 수치입니다`
+    return text
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <header className="bg-blue-600 text-white px-5 py-4 flex items-center gap-3">
@@ -292,6 +311,30 @@ export function VisitSummary({ onBack }: VisitSummaryProps) {
             </CardContent>
           </Card>
         )}
+
+        {/* 공유/프린트 */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              const text = generateTextSummary()
+              if (navigator.share) {
+                navigator.share({ title: '건강 기록 요약', text })
+              } else {
+                navigator.clipboard.writeText(text)
+                alert('요약이 클립보드에 복사되었습니다')
+              }
+            }}
+            className="flex-1 h-14 bg-blue-600 text-white text-lg font-bold rounded-2xl active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <span>📤</span> 공유하기
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="h-14 px-6 bg-gray-100 text-gray-700 text-lg font-bold rounded-2xl active:bg-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <span>🖨️</span> 인쇄
+          </button>
+        </div>
 
         {/* 안내 */}
         <div className="bg-blue-50 rounded-2xl p-4 text-center border border-blue-200">

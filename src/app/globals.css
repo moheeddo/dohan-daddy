@@ -165,6 +165,16 @@ html {
   animation: pulse-slow 2s ease-in-out infinite;
 }
 
+/* 페이드인 */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
 /* 축하 오버레이 애니메이션 */
 @keyframes celebration {
   0% { opacity: 0; transform: scale(0.8); }
@@ -186,6 +196,21 @@ html {
 
 .animate-bounce-once {
   animation: bounce-once 0.8s ease-out;
+}
+
+/* 프린트 스타일 (진료 요약) */
+@media print {
+  nav, header button, .animate-slide-up-banner, .fixed {
+    display: none !important;
+  }
+  body {
+    padding: 0 !important;
+    background: white !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 
 /* PWA standalone 모드에서 상단 safe area */

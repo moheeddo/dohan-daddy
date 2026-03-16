@@ -332,6 +332,11 @@ export function PatientHome() {
 
   useEffect(() => { loadData() }, [])
 
+  // 뷰 전환 시 스크롤 위치 초기화
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [view])
+
   // 빠른 컨디션 입력 (홈에서 바로 3초 기록)
   const handleQuickCondition = (condition: number) => {
     if (!user) return
