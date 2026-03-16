@@ -165,6 +165,29 @@ html {
   animation: pulse-slow 2s ease-in-out infinite;
 }
 
+/* 축하 오버레이 애니메이션 */
+@keyframes celebration {
+  0% { opacity: 0; transform: scale(0.8); }
+  15% { opacity: 1; transform: scale(1.05); }
+  30% { transform: scale(1); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.95); }
+}
+
+.animate-celebration {
+  animation: celebration 2.5s ease-out forwards;
+}
+
+@keyframes bounce-once {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-15px); }
+  60% { transform: translateY(-5px); }
+}
+
+.animate-bounce-once {
+  animation: bounce-once 0.8s ease-out;
+}
+
 /* PWA standalone 모드에서 상단 safe area */
 @supports (padding-top: env(safe-area-inset-top)) {
   body {

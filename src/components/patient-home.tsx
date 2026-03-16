@@ -501,17 +501,25 @@ export function PatientHome() {
           </CardContent>
         </Card>
 
-        {/* 월간 기록 달력 */}
-        <Card className="shadow-sm">
-          <CardContent className="pt-4 pb-3">
-            <MonthlyCalendar />
-          </CardContent>
-        </Card>
-
-        {/* 약 복용 타이머 */}
+        {/* 약 복용 타이머 - 가장 중요해서 위로 */}
         <Card className="shadow-sm">
           <CardContent className="pt-4 pb-3">
             <MedicationTimer />
+          </CardContent>
+        </Card>
+
+        {/* 월간 기록 달력 - 접기 가능 */}
+        <Card className="shadow-sm">
+          <CardContent className="pt-4 pb-3">
+            <details>
+              <summary className="text-base font-semibold text-gray-700 cursor-pointer select-none list-none flex items-center justify-between">
+                <span>{new Date().getMonth() + 1}월 기록 달력</span>
+                <span className="text-sm text-gray-400">탭하여 펼치기</span>
+              </summary>
+              <div className="mt-3">
+                <MonthlyCalendar />
+              </div>
+            </details>
           </CardContent>
         </Card>
 

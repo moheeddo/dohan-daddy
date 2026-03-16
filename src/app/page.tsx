@@ -5,6 +5,7 @@ import { PinLogin } from '@/components/pin-login'
 import { PatientHome } from '@/components/patient-home'
 import { CaregiverHome } from '@/components/caregiver-home'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
+import { OfflineIndicator } from '@/components/offline-indicator'
 
 export default function Home() {
   const { user, isLoading } = useAuth()
@@ -23,6 +24,7 @@ export default function Home() {
   if (!user) {
     return (
       <>
+        <OfflineIndicator />
         <PinLogin />
         <PwaInstallPrompt />
       </>
@@ -32,6 +34,7 @@ export default function Home() {
   if (user.role === 'patient') {
     return (
       <>
+        <OfflineIndicator />
         <PatientHome />
         <PwaInstallPrompt />
       </>
@@ -40,6 +43,7 @@ export default function Home() {
 
   return (
     <>
+      <OfflineIndicator />
       <CaregiverHome />
       <PwaInstallPrompt />
     </>

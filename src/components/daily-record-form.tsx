@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/lib/auth-context'
-import { getDailyRecordByDate, saveDailyRecord, getMealsByDate, saveMeal, getExercisesByDate, saveExercise, deleteExercise, getSupplementsByDate, saveSupplement, getTodayString } from '@/lib/store'
+import { getDailyRecordByDate, saveDailyRecord, getMealsByDate, saveMeal, getExercisesByDate, saveExercise, deleteExercise, getSupplementsByDate, saveSupplement, getTodayString, getRecordStreak } from '@/lib/store'
+import { haptic } from '@/lib/haptic'
 import type { DailyRecord, SputumColor, MealType, ExerciseType } from '@/types/database'
 
 const SPUTUM_COLORS: { value: SputumColor; label: string; color: string }[] = [
@@ -91,6 +92,7 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
 
   const [activeTab, setActiveTab] = useState<'condition' | 'meal' | 'exercise'>('condition')
   const [saved, setSaved] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
 
   // 기존 데이터 로드
   useEffect(() => {
@@ -163,8 +165,13 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
       saveSupplement({ user_id: user.id, date: today, supplement_name: name, taken })
     })
 
+    haptic('success')
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setShowCelebration(true)
+    setTimeout(() => {
+      setSaved(false)
+      setShowCelebration(false)
+    }, 2500)
     onSaved?.()
   }
 
@@ -511,6 +518,22 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
       >
         {saved ? '저장 완료!' : '오늘의 기록 저장'}
       </Button>
+
+      {/* 축하 오버레이 */}
+      {showCelebration && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none animate-celebration">
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 mx-8 max-w-sm w-full text-center shadow-2xl pointer-events-auto">
+            <p className="text-6xl mb-3 animate-bounce-once">🎉</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">잘하셨어요!</p>
+            <p className="text-lg text-gray-600">오늘도 건강 기록 완료</p>
+            {getRecordStreak() > 1 && (
+              <p className="text-base text-blue-600 font-bold mt-2">
+                🔥 {getRecordStreak()}일 연속 기록 중!
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
