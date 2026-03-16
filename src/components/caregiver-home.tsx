@@ -121,8 +121,10 @@ export function CaregiverHome() {
     { date: '2024.02~', event: '면역력 강화 집중', type: 'current', detail: '6개월마다 아산병원 검진, 운동/영양 관리' },
   ]
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gray-50 pb-24">
       {/* 헤더 */}
       <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-4">
         <div className="flex justify-between items-center">
@@ -130,13 +132,13 @@ export function CaregiverHome() {
             <h1 className="text-xl font-bold">관리자 대시보드</h1>
             <p className="text-indigo-200">{user?.name}님</p>
           </div>
-          <Button variant="ghost" className="text-white/70" onClick={logout}>
+          <button className="text-white/50 text-base py-2 px-3" onClick={() => setShowLogoutConfirm(true)}>
             나가기
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* 탭 네비게이션 */}
+      {/* 상단 탭 네비게이션 */}
       <div className="flex overflow-x-auto border-b bg-white sticky top-0 z-10">
         {([
           { id: 'dashboard' as const, label: '현황' },
@@ -466,6 +468,31 @@ export function CaregiverHome() {
 
         {/* 최신 정보 뷰 - InfoHub로 대체됨 (info 탭 참조) */}
       </div>
+
+      {/* 로그아웃 확인 */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">나가시겠어요?</h3>
+            <p className="text-base text-gray-500 text-center mb-5">로그인 화면으로 돌아갑니다</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 h-14 rounded-2xl bg-gray-100 text-lg font-semibold text-gray-700 active:bg-gray-200 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={logout}
+                className="flex-1 h-14 rounded-2xl bg-red-500 text-lg font-semibold text-white active:bg-red-600 transition"
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -20,9 +20,70 @@ import {
   getRecordStreak,
   hasYesterdayRecord,
   saveDailyRecord,
+  getMonthRecordDates,
 } from '@/lib/store'
 import { expandedArticles } from '@/lib/ntm-knowledge'
 import type { DailyRecord, ExerciseType } from '@/types/database'
+
+// ─── 월간 기록 달력 ──────────────────
+function MonthlyCalendar() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const recordDates = getMonthRecordDates(year, month)
+  const today = getTodayString()
+
+  const monthName = `${month + 1}월`
+  const firstDay = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const dayLabels = ['일', '월', '화', '수', '목', '금', '토']
+
+  const cells = []
+  for (let i = 0; i < firstDay; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  return (
+    <div>
+      <p className="text-base font-semibold text-gray-700 mb-2">{year}년 {monthName} 기록</p>
+      <div className="grid grid-cols-7 gap-0.5 text-center">
+        {dayLabels.map(d => (
+          <div key={d} className="text-xs font-medium text-gray-400 py-1">{d}</div>
+        ))}
+        {cells.map((day, i) => {
+          if (day === null) return <div key={`e${i}`} />
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const hasRecord = recordDates.has(dateStr)
+          const isToday = dateStr === today
+          const isFuture = dateStr > today
+          return (
+            <div
+              key={i}
+              className={`aspect-square flex items-center justify-center rounded-lg text-sm font-medium ${
+                isToday
+                  ? 'bg-blue-600 text-white font-bold'
+                  : hasRecord
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : isFuture
+                      ? 'text-gray-300'
+                      : 'text-gray-400'
+              }`}
+            >
+              {hasRecord && !isToday ? '✓' : day}
+            </div>
+          )
+        })}
+      </div>
+      <div className="flex items-center gap-3 mt-2 justify-center">
+        <span className="flex items-center gap-1 text-xs text-gray-500">
+          <span className="w-3 h-3 bg-emerald-100 rounded" /> 기록함
+        </span>
+        <span className="flex items-center gap-1 text-xs text-gray-500">
+          <span className="w-3 h-3 bg-blue-600 rounded" /> 오늘
+        </span>
+      </div>
+    </div>
+  )
+}
 
 // ─── 주간 컨디션 차트 (클릭 가능) ──────────────────
 function WeeklyChart({ records, onTap }: { records: DailyRecord[]; onTap: () => void }) {
@@ -343,7 +404,7 @@ export function PatientHome() {
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-5 pt-6 pb-10 rounded-b-[2rem]">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <p className="text-blue-200 text-base">{greeting}</p>
+            <p className="text-blue-200 text-base">{now.getMonth() + 1}월 {now.getDate()}일 · {greeting}</p>
             <h1 className="text-3xl font-bold tracking-tight">{user?.name}님</h1>
           </div>
           <button className="text-white/50 text-base py-2 px-3" onClick={handleLogout}>나가기</button>
@@ -416,6 +477,13 @@ export function PatientHome() {
           <CardContent className="pt-4 pb-3">
             <p className="text-base font-semibold text-gray-700 mb-3">이번 주 컨디션</p>
             <WeeklyChart records={recentRecords} onTap={() => setView('record')} />
+          </CardContent>
+        </Card>
+
+        {/* 월간 기록 달력 */}
+        <Card className="shadow-sm">
+          <CardContent className="pt-4 pb-3">
+            <MonthlyCalendar />
           </CardContent>
         </Card>
 

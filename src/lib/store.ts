@@ -257,3 +257,10 @@ export function hasYesterdayRecord(): boolean {
   const yesterday = d.toISOString().split('T')[0]
   return getDailyRecordByDate(yesterday) !== undefined
 }
+
+// 월간 기록 날짜 Set 반환
+export function getMonthRecordDates(year: number, month: number): Set<string> {
+  const records = getDailyRecords()
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}`
+  return new Set(records.filter(r => r.date.startsWith(prefix)).map(r => r.date))
+}
