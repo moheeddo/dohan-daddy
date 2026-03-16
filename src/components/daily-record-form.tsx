@@ -176,10 +176,36 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
     }
   }
 
-  const SliderLabel = ({ label, value, max = 10 }: { label: string; value: number; max?: number }) => (
-    <div className="flex justify-between items-center mb-1">
-      <span className="text-lg font-medium text-gray-700">{label}</span>
-      <span className="text-lg font-bold text-blue-600">{value}/{max}</span>
+  // 시니어 친화적 슬라이더: +/- 버튼 포함
+  const SliderWithButtons = ({ label, value, setValue, max = 10, minLabel = '없음', maxLabel = '심함' }: {
+    label: string; value: number; setValue: (v: number) => void; max?: number; minLabel?: string; maxLabel?: string
+  }) => (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-lg font-medium text-gray-700">{label}</span>
+        <span className="text-lg font-bold text-blue-600">{value}/{max}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setValue(Math.max(0, value - 1))}
+          className="w-12 h-12 rounded-xl bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200 flex items-center justify-center flex-shrink-0 select-none"
+        >
+          −
+        </button>
+        <div className="flex-1">
+          <Slider value={[value]} onValueChange={sliderChange(setValue)} max={max} step={1} />
+        </div>
+        <button
+          onClick={() => setValue(Math.min(max, value + 1))}
+          className="w-12 h-12 rounded-xl bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200 flex items-center justify-center flex-shrink-0 select-none"
+        >
+          +
+        </button>
+      </div>
+      <div className="flex justify-between px-14">
+        <span className="text-sm text-gray-400">{minLabel}</span>
+        <span className="text-sm text-gray-400">{maxLabel}</span>
+      </div>
     </div>
   )
 
@@ -236,23 +262,8 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
               <CardTitle className="text-xl">증상 체크</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <SliderLabel label="기침 정도" value={coughLevel} />
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400 w-8">없음</span>
-                  <Slider value={[coughLevel]} onValueChange={sliderChange(setCoughLevel)} max={10} step={1} className="flex-1" />
-                  <span className="text-sm text-gray-400 w-8">심함</span>
-                </div>
-              </div>
-
-              <div>
-                <SliderLabel label="가래 양" value={sputumAmount} />
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400 w-8">없음</span>
-                  <Slider value={[sputumAmount]} onValueChange={sliderChange(setSputumAmount)} max={10} step={1} className="flex-1" />
-                  <span className="text-sm text-gray-400 w-8">많음</span>
-                </div>
-              </div>
+              <SliderWithButtons label="기침 정도" value={coughLevel} setValue={setCoughLevel} />
+              <SliderWithButtons label="가래 양" value={sputumAmount} setValue={setSputumAmount} minLabel="없음" maxLabel="많음" />
 
               <div>
                 <p className="text-lg font-medium text-gray-700 mb-2">가래 색</p>
@@ -261,7 +272,7 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
                     <Button
                       key={sc.value}
                       variant={sputumColor === sc.value ? 'default' : 'outline'}
-                      className={`h-12 px-4 text-base ${
+                      className={`h-14 px-5 text-base ${
                         sputumColor === sc.value ? 'bg-blue-600' : sc.color
                       }`}
                       onClick={() => setSputumColor(sc.value)}
@@ -272,23 +283,8 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
                 </div>
               </div>
 
-              <div>
-                <SliderLabel label="호흡 곤란" value={breathingDifficulty} />
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400 w-8">없음</span>
-                  <Slider value={[breathingDifficulty]} onValueChange={sliderChange(setBreathingDifficulty)} max={10} step={1} className="flex-1" />
-                  <span className="text-sm text-gray-400 w-8">심함</span>
-                </div>
-              </div>
-
-              <div>
-                <SliderLabel label="피로도" value={fatigueLevel} />
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400 w-8">없음</span>
-                  <Slider value={[fatigueLevel]} onValueChange={sliderChange(setFatigueLevel)} max={10} step={1} className="flex-1" />
-                  <span className="text-sm text-gray-400 w-8">심함</span>
-                </div>
-              </div>
+              <SliderWithButtons label="호흡 곤란" value={breathingDifficulty} setValue={setBreathingDifficulty} />
+              <SliderWithButtons label="피로도" value={fatigueLevel} setValue={setFatigueLevel} />
             </CardContent>
           </Card>
 
@@ -503,14 +499,17 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
         </div>
       )}
 
-      {/* 저장 버튼 */}
+      {/* 저장 버튼 - 큰 터치 영역 + 강한 피드백 */}
       <Button
         onClick={handleSave}
-        className={`w-full h-16 text-xl font-bold transition-all ${
-          saved ? 'bg-green-600 hover:bg-green-600' : 'bg-blue-600 hover:bg-blue-700'
+        className={`w-full h-18 text-xl font-bold transition-all rounded-2xl ${
+          saved
+            ? 'bg-green-600 hover:bg-green-600 scale-[1.02]'
+            : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.97]'
         }`}
+        style={{ minHeight: '4.5rem' }}
       >
-        {saved ? '✅ 저장되었습니다!' : '💾 오늘의 기록 저장'}
+        {saved ? '저장 완료!' : '오늘의 기록 저장'}
       </Button>
     </div>
   )
