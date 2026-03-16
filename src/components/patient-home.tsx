@@ -17,6 +17,8 @@ import {
   getUpcomingAppointments,
   saveExercise,
   deleteExercise,
+  getRecordStreak,
+  hasYesterdayRecord,
 } from '@/lib/store'
 import { expandedArticles } from '@/lib/ntm-knowledge'
 import type { DailyRecord, ExerciseType } from '@/types/database'
@@ -57,14 +59,14 @@ function WeeklyChart({ records, onTap }: { records: DailyRecord[]; onTap: () => 
                   />
                 )}
               </div>
-              <span className={`text-xs ${isToday ? 'font-bold text-blue-600' : 'text-gray-400'}`}>
+              <span className={`text-sm ${isToday ? 'font-bold text-blue-600' : 'text-gray-500'}`}>
                 {dayName}
               </span>
             </div>
           )
         })}
       </div>
-      <p className="text-xs text-gray-400 text-center mt-2">탭하여 오늘 기록하기</p>
+      <p className="text-sm text-gray-500 text-center mt-2">탭하여 오늘 기록하기</p>
     </button>
   )
 }
@@ -136,13 +138,13 @@ function QuickExerciseSheet({
             {todayExercises.map(e => {
               const ex = QUICK_EXERCISES.find(q => q.type === e.exercise_type)
               return (
-                <div key={e.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-xl">
-                  <span className="text-base">{ex?.emoji} {ex?.label} {e.duration_minutes}분</span>
-                  <button className="text-sm text-gray-400" onClick={() => handleDelete(e.id!)}>삭제</button>
+                <div key={e.id} className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-xl">
+                  <span className="text-base font-medium">{ex?.emoji} {ex?.label} {e.duration_minutes}분</span>
+                  <button className="text-sm text-gray-400 py-1 px-2" onClick={() => handleDelete(e.id!)}>삭제</button>
                 </div>
               )
             })}
-            <p className="text-right text-sm font-semibold text-blue-600">총 {totalMinutes}분</p>
+            <p className="text-right text-base font-semibold text-blue-600">총 {totalMinutes}분</p>
           </div>
         )}
 
@@ -152,14 +154,14 @@ function QuickExerciseSheet({
             <button
               key={ex.type}
               onClick={() => setSelected(ex.type)}
-              className={`flex flex-col items-center gap-1 p-3 rounded-2xl border-2 transition-all ${
+              className={`flex flex-col items-center gap-1.5 p-3.5 rounded-2xl border-2 transition-all ${
                 selected === ex.type
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-100 bg-gray-50'
               }`}
             >
               <span className="text-2xl">{ex.emoji}</span>
-              <span className="text-xs font-medium text-gray-700">{ex.label}</span>
+              <span className="text-sm font-medium text-gray-700">{ex.label}</span>
             </button>
           ))}
         </div>
@@ -167,15 +169,15 @@ function QuickExerciseSheet({
         {/* 시간 선택 */}
         {selected && (
           <>
-            <div className="flex items-center justify-center gap-3 mb-5">
+            <div className="flex items-center justify-center gap-2.5 mb-5">
               {[10, 20, 30, 45, 60].map(m => (
                 <button
                   key={m}
                   onClick={() => setDuration(m)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-4 py-2.5 rounded-full text-base font-medium transition-all ${
                     duration === m
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-600'
+                      : 'bg-gray-100 text-gray-700'
                   }`}
                 >
                   {m}분
@@ -197,6 +199,37 @@ function QuickExerciseSheet({
   )
 }
 
+// ─── 하단 탭 네비게이션 ──────────────────
+const TAB_ITEMS = [
+  { id: 'home' as const, label: '홈', icon: '🏠' },
+  { id: 'record' as const, label: '기록', icon: '📝' },
+  { id: 'info' as const, label: '치료정보', icon: '💊' },
+  { id: 'appointment' as const, label: '진료', icon: '🏥' },
+]
+
+function BottomTabBar({ activeTab, onTabChange }: { activeTab: ViewType; onTabChange: (tab: ViewType) => void }) {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
+      <div className="max-w-lg mx-auto flex">
+        {TAB_ITEMS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors select-none ${
+              activeTab === tab.id
+                ? 'text-blue-600'
+                : 'text-gray-400'
+            }`}
+          >
+            <span className="text-2xl leading-none">{tab.icon}</span>
+            <span className={`text-xs font-medium ${activeTab === tab.id ? 'font-bold' : ''}`}>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
 // ─── 메인 ──────────────────────────────
 type ViewType = 'home' | 'record' | 'info' | 'appointment'
 
@@ -209,6 +242,8 @@ export function PatientHome() {
   const [todayExerciseMinutes, setTodayExerciseMinutes] = useState(0)
   const [nextApptDate, setNextApptDate] = useState<string | null>(null)
   const [nextApptHospital, setNextApptHospital] = useState<string>('')
+  const [streak, setStreak] = useState(0)
+  const [yesterdayMissed, setYesterdayMissed] = useState(false)
 
   const loadData = () => {
     const today = getTodayString()
@@ -223,6 +258,8 @@ export function PatientHome() {
     } else {
       setNextApptDate(null)
     }
+    setStreak(getRecordStreak())
+    setYesterdayMissed(!hasYesterdayRecord())
   }
 
   useEffect(() => { loadData() }, [])
@@ -238,26 +275,41 @@ export function PatientHome() {
     research: '연구', news: '뉴스', immunity: '면역력',
   }
 
-  // ─── 서브 화면 ───
+  // ─── 서브 화면들 ───
   if (view === 'record') {
     return (
-      <div className="min-h-screen bg-gray-50 pb-8">
-        <header className="bg-blue-600 text-white px-4 py-3 flex items-center gap-3">
-          <button className="text-lg" onClick={() => { setView('home'); loadData() }}>←</button>
-          <h1 className="text-lg font-bold">오늘의 건강 기록</h1>
+      <div className="min-h-screen bg-gray-50 pb-24">
+        <header className="bg-blue-600 text-white px-5 py-4 flex items-center gap-3">
+          <button className="text-xl py-1 px-2" onClick={() => { setView('home'); loadData() }}>←</button>
+          <h1 className="text-xl font-bold">오늘의 건강 기록</h1>
         </header>
         <div className="max-w-lg mx-auto p-4">
           <DailyRecordForm onSaved={loadData} />
         </div>
+        <BottomTabBar activeTab={view} onTabChange={(tab) => { setView(tab); loadData() }} />
       </div>
     )
   }
-  if (view === 'info') return <InfoHub onBack={() => setView('home')} isPatientView />
-  if (view === 'appointment') return <AppointmentManager onBack={() => { setView('home'); loadData() }} />
+  if (view === 'info') {
+    return (
+      <div className="pb-20">
+        <InfoHub onBack={() => setView('home')} isPatientView />
+        <BottomTabBar activeTab={view} onTabChange={(tab) => { setView(tab); loadData() }} />
+      </div>
+    )
+  }
+  if (view === 'appointment') {
+    return (
+      <div className="pb-20">
+        <AppointmentManager onBack={() => { setView('home'); loadData() }} />
+        <BottomTabBar activeTab={view} onTabChange={(tab) => { setView(tab); loadData() }} />
+      </div>
+    )
+  }
 
   // ─── 홈 ───
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+    <div className="min-h-screen bg-gray-50 pb-24">
       {/* 헤더 */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-5 pt-6 pb-10 rounded-b-[2rem]">
         <div className="flex justify-between items-start mb-3">
@@ -273,8 +325,8 @@ export function PatientHome() {
               {todayRecord.overall_condition === 3 ? '😊' : todayRecord.overall_condition === 2 ? '😐' : '😔'}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white/90">오늘의 컨디션</p>
-              <p className="text-xs text-blue-200">
+              <p className="text-base font-medium text-white/90">오늘의 컨디션</p>
+              <p className="text-sm text-blue-200">
                 기침 {todayRecord.cough_level} · 가래 {todayRecord.sputum_amount} · 피로 {todayRecord.fatigue_level}
               </p>
             </div>
@@ -284,24 +336,39 @@ export function PatientHome() {
             onClick={() => setView('record')}
             className="w-full bg-white/15 backdrop-blur rounded-2xl px-4 py-4 text-center active:bg-white/25 transition"
           >
-            <p className="text-base">오늘의 기록을 남겨보세요</p>
+            <p className="text-lg font-medium">오늘의 기록을 남겨보세요</p>
           </button>
         )}
       </div>
 
       <div className="max-w-lg mx-auto px-4 -mt-5 space-y-3">
-        {/* 기록 버튼 - 시니어 친화적 큰 터치 영역 */}
-        <Button
-          onClick={() => setView('record')}
-          className="w-full h-16 text-xl font-bold bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-lg rounded-2xl transition-transform"
-        >
-          오늘의 건강 기록하기
-        </Button>
+        {/* 어제 미기록 안내 (부드러운 톤) */}
+        {yesterdayMissed && !todayRecord && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-center">
+            <p className="text-base text-amber-800">어제 기록이 비어있어요. 지금 오늘 기록을 남겨볼까요?</p>
+          </div>
+        )}
+
+        {/* 스트릭 카운터 + 기록 버튼 */}
+        <div className="flex gap-3">
+          {streak > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center px-5 py-3 flex-shrink-0">
+              <p className="text-2xl font-bold text-blue-600">{streak}</p>
+              <p className="text-xs font-medium text-gray-500">연속 기록</p>
+            </div>
+          )}
+          <Button
+            onClick={() => setView('record')}
+            className="flex-1 h-16 text-xl font-bold bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-lg rounded-2xl transition-transform"
+          >
+            {todayRecord ? '기록 수정하기' : '오늘의 건강 기록하기'}
+          </Button>
+        </div>
 
         {/* 이번 주 컨디션 (클릭 → 기록) */}
         <Card className="shadow-sm">
           <CardContent className="pt-4 pb-3">
-            <p className="text-sm font-semibold text-gray-500 mb-3">이번 주 컨디션</p>
+            <p className="text-base font-semibold text-gray-700 mb-3">이번 주 컨디션</p>
             <WeeklyChart records={recentRecords} onTap={() => setView('record')} />
           </CardContent>
         </Card>
@@ -314,8 +381,8 @@ export function PatientHome() {
           >
             <CardContent className="pt-4 pb-3 text-center">
               <p className="text-3xl leading-none">🏃</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1.5">{todayExerciseMinutes}<span className="text-base font-normal text-gray-400">분</span></p>
-              <p className="text-sm text-gray-400 mt-0.5">탭하여 운동 기록</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1.5">{todayExerciseMinutes}<span className="text-base font-normal text-gray-500">분</span></p>
+              <p className="text-sm text-gray-500 mt-0.5">탭하여 운동 기록</p>
             </CardContent>
           </Card>
           <Card
@@ -327,12 +394,12 @@ export function PatientHome() {
               {daysUntil !== null ? (
                 <>
                   <p className="text-xl font-bold text-blue-600 mt-1.5">D-{daysUntil}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{nextApptHospital}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{nextApptHospital}</p>
                 </>
               ) : (
                 <>
-                  <p className="text-sm font-bold text-orange-500 mt-1.5">일정 등록</p>
-                  <p className="text-xs text-gray-400 mt-0.5">탭하여 등록</p>
+                  <p className="text-base font-bold text-orange-600 mt-1.5">일정 등록</p>
+                  <p className="text-sm text-gray-500 mt-0.5">탭하여 등록</p>
                 </>
               )}
             </CardContent>
@@ -343,36 +410,18 @@ export function PatientHome() {
         <Card className="shadow-sm border-l-4 border-l-blue-500 overflow-hidden">
           <CardContent className="pt-4 pb-4">
             <div className="flex items-center gap-1.5 mb-2">
-              <Badge variant="secondary" className="text-xs">{catLabels[todayArticle.category]}</Badge>
-              <span className="text-xs text-gray-400">{todayArticle.published_at}</span>
+              <Badge variant="secondary" className="text-sm">{catLabels[todayArticle.category]}</Badge>
+              <span className="text-sm text-gray-500">{todayArticle.published_at}</span>
             </div>
-            <h3 className="text-base font-bold text-gray-900 leading-snug mb-1.5">{todayArticle.title_ko}</h3>
-            <p className="text-sm text-gray-500 leading-relaxed">{todayArticle.summary_ko}</p>
+            <h3 className="text-lg font-bold text-gray-900 leading-snug mb-1.5">{todayArticle.title_ko}</h3>
+            <p className="text-base text-gray-600 leading-relaxed">{todayArticle.summary_ko}</p>
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-xs text-gray-400">희망</span>
-              <Progress value={todayArticle.hope_score} className="flex-1 h-1.5" />
-              <span className="text-xs font-bold text-blue-600">{todayArticle.hope_score}%</span>
+              <span className="text-sm text-gray-500">희망</span>
+              <Progress value={todayArticle.hope_score} className="flex-1 h-2" />
+              <span className="text-sm font-bold text-blue-600">{todayArticle.hope_score}%</span>
             </div>
           </CardContent>
         </Card>
-
-        {/* 바로가기 */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => setView('info')}
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-4 shadow-sm border border-gray-100 active:scale-[0.97] transition-transform"
-          >
-            <span className="text-3xl">💊</span>
-            <span className="text-base font-semibold text-gray-700">치료 정보</span>
-          </button>
-          <button
-            onClick={() => setView('appointment')}
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-4 shadow-sm border border-gray-100 active:scale-[0.97] transition-transform"
-          >
-            <span className="text-3xl">📋</span>
-            <span className="text-base font-semibold text-gray-700">진료 일정</span>
-          </button>
-        </div>
 
         {/* 격려 메시지 */}
         <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl px-5 py-5 text-center border border-emerald-100">
@@ -380,7 +429,7 @@ export function PatientHome() {
           <p className="text-lg font-semibold text-emerald-800 leading-snug">
             위암 3기도 이기신 분,<br />이것도 반드시 이겨내실 수 있습니다
           </p>
-          <p className="text-sm text-emerald-600 mt-1.5">
+          <p className="text-sm text-emerald-700 mt-1.5">
             전 세계에서 M. abscessus 치료법이 빠르게 발전하고 있습니다
           </p>
         </div>
@@ -393,6 +442,9 @@ export function PatientHome() {
         userId={user?.id || ''}
         onSaved={loadData}
       />
+
+      {/* 하단 탭 네비게이션 */}
+      <BottomTabBar activeTab={view} onTabChange={(tab) => { setView(tab); loadData() }} />
 
       <style jsx>{`
         @keyframes slide-up {

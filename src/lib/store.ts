@@ -227,3 +227,33 @@ export function getRecentDailyRecords(days: number): DailyRecord[] {
 export function getTodayString(): string {
   return new Date().toISOString().split('T')[0]
 }
+
+// 연속 기록 스트릭 계산
+export function getRecordStreak(): number {
+  const records = getDailyRecords()
+  if (records.length === 0) return 0
+
+  const recordDates = new Set(records.map(r => r.date))
+  let streak = 0
+  const d = new Date()
+
+  // 오늘부터 거꾸로 세기
+  while (true) {
+    const dateStr = d.toISOString().split('T')[0]
+    if (recordDates.has(dateStr)) {
+      streak++
+      d.setDate(d.getDate() - 1)
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
+// 어제 기록 여부 확인
+export function hasYesterdayRecord(): boolean {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  const yesterday = d.toISOString().split('T')[0]
+  return getDailyRecordByDate(yesterday) !== undefined
+}
