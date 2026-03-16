@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context'
 import { DailyRecordForm } from '@/components/daily-record-form'
 import { AppointmentManager } from '@/components/appointment-manager'
 import { InfoHub } from '@/components/info-hub'
+import { VisitSummary } from '@/components/visit-summary'
 import {
   getDailyRecordByDate,
   getRecentDailyRecords,
@@ -293,7 +294,7 @@ function BottomTabBar({ activeTab, onTabChange }: { activeTab: ViewType; onTabCh
 }
 
 // ─── 메인 ──────────────────────────────
-type ViewType = 'home' | 'record' | 'info' | 'appointment'
+type ViewType = 'home' | 'record' | 'info' | 'appointment' | 'summary'
 
 export function PatientHome() {
   const { user, logout } = useAuth()
@@ -393,6 +394,14 @@ export function PatientHome() {
       <div className="pb-20">
         <AppointmentManager onBack={() => { setView('home'); loadData() }} />
         <BottomTabBar activeTab={view} onTabChange={(tab) => { setView(tab); loadData() }} />
+      </div>
+    )
+  }
+  if (view === 'summary') {
+    return (
+      <div className="pb-20">
+        <VisitSummary onBack={() => { setView('home'); loadData() }} />
+        <BottomTabBar activeTab={'appointment'} onTabChange={(tab) => { setView(tab); loadData() }} />
       </div>
     )
   }
@@ -519,6 +528,19 @@ export function PatientHome() {
             </CardContent>
           </Card>
         </div>
+
+        {/* 진료 요약 바로가기 */}
+        <button
+          onClick={() => setView('summary')}
+          className="w-full bg-white rounded-2xl shadow-sm border border-blue-200 px-5 py-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
+        >
+          <span className="text-3xl">📋</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-lg font-bold text-gray-900">진료 요약 보기</p>
+            <p className="text-sm text-gray-500">기록을 정리해서 의사에게 보여주세요</p>
+          </div>
+          <span className="text-gray-300 text-xl">→</span>
+        </button>
 
         {/* 오늘의 희망 카드 */}
         <Card className="shadow-sm border-l-4 border-l-blue-500 overflow-hidden">
