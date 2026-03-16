@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { FontSizeProvider } from "@/components/font-size-control";
 
 export const metadata: Metadata = {
   title: "아버지 건강 관리",
@@ -41,7 +42,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
-          {children}
+          <FontSizeProvider>
+            {children}
+          </FontSizeProvider>
         </AuthProvider>
         <script
           dangerouslySetInnerHTML={{

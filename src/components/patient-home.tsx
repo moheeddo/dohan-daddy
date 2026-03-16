@@ -13,6 +13,7 @@ import { VisitSummary } from '@/components/visit-summary'
 import { DataBackup } from '@/components/data-backup'
 import { MedicationTimer } from '@/components/medication-timer'
 import { haptic } from '@/lib/haptic'
+import { FontSizeSelector } from '@/components/font-size-control'
 import {
   getDailyRecordByDate,
   getRecentDailyRecords,
@@ -332,6 +333,33 @@ export function PatientHome() {
 
   useEffect(() => { loadData() }, [])
 
+  // 알림 권한 요청 + 진료일 리마인더
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      // 앱 사용 3초 후 알림 권한 요청
+      const timer = setTimeout(() => {
+        Notification.requestPermission()
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  // 진료일이 오늘이면 알림
+  useEffect(() => {
+    if (!nextApptDate) return
+    const today = getTodayString()
+    if (nextApptDate === today && 'Notification' in window && Notification.permission === 'granted') {
+      const shown = sessionStorage.getItem('appt_notif_shown')
+      if (!shown) {
+        new Notification('오늘 진료 예정입니다', {
+          body: `${nextApptHospital} 방문 예정이에요. 진료 요약을 확인해주세요!`,
+          icon: '/icon-192.png',
+        })
+        sessionStorage.setItem('appt_notif_shown', 'true')
+      }
+    }
+  }, [nextApptDate, nextApptHospital])
+
   // 뷰 전환 시 스크롤 위치 초기화
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -591,29 +619,42 @@ export function PatientHome() {
           </CardContent>
         </Card>
 
-        {/* 격려 메시지 */}
-        <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl px-5 py-5 text-center border border-emerald-100">
-          <p className="text-4xl mb-2">💪</p>
-          <p className="text-lg font-semibold text-emerald-800 leading-snug">
-            위암 3기도 이기신 분,<br />이것도 반드시 이겨내실 수 있습니다
-          </p>
-          <p className="text-sm text-emerald-700 mt-1.5">
-            전 세계에서 M. abscessus 치료법이 빠르게 발전하고 있습니다
-          </p>
-        </div>
+        {/* 격려 메시지 (날짜별 변경) */}
+        {(() => {
+          const messages = [
+            { emoji: '💪', main: '위암 3기도 이기신 분,\n이것도 반드시 이겨내실 수 있습니다', sub: '전 세계에서 M. abscessus 치료법이 빠르게 발전하고 있습니다' },
+            { emoji: '🌅', main: '오늘도 건강을 위한\n한 걸음을 내딛으셨습니다', sub: '꾸준한 기록이 치료에 큰 도움이 됩니다' },
+            { emoji: '🌿', main: '면역력은 매일매일\n조금씩 좋아지고 있습니다', sub: '규칙적인 운동과 영양이 가장 좋은 약입니다' },
+            { emoji: '⭐', main: '아버지의 노력을\n온 가족이 응원합니다', sub: '건강 기록을 통해 의사 선생님도 더 정확한 진료를 할 수 있습니다' },
+            { emoji: '🏔️', main: '산을 오르듯\n한 발짝씩 나아가고 계십니다', sub: 'NTM 치료는 시간이 걸리지만, 포기하지 않는 것이 중요합니다' },
+            { emoji: '🌻', main: '오늘 하루도\n감사하며 시작해봐요', sub: '긍정적인 마음이 면역력 향상에 도움이 됩니다' },
+            { emoji: '🤝', main: '혼자가 아닙니다\n함께 이겨낼 수 있습니다', sub: '심태선 교수님과 함께하는 치료, 꼭 좋은 결과가 있을 것입니다' },
+          ]
+          const dayIndex = now.getDate() % messages.length
+          const msg = messages[dayIndex]
+          return (
+            <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl px-5 py-5 text-center border border-emerald-100">
+              <p className="text-4xl mb-2">{msg.emoji}</p>
+              <p className="text-lg font-semibold text-emerald-800 leading-snug whitespace-pre-line">{msg.main}</p>
+              <p className="text-sm text-emerald-700 mt-1.5">{msg.sub}</p>
+            </div>
+          )
+        })()}
 
-        {/* 데이터 백업 */}
-        <button
-          onClick={() => setView('backup')}
-          className="w-full bg-gray-50 rounded-2xl border border-gray-200 px-5 py-3 flex items-center gap-3 active:bg-gray-100 transition text-left"
-        >
-          <span className="text-2xl">💾</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-gray-700">데이터 백업</p>
-            <p className="text-xs text-gray-400">기록을 안전하게 보관하세요</p>
+        {/* 설정 영역 */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
+          <FontSizeSelector />
+          <div className="border-t border-gray-100 pt-3">
+            <button
+              onClick={() => setView('backup')}
+              className="w-full flex items-center gap-3 active:bg-gray-50 transition text-left rounded-xl px-1 py-1"
+            >
+              <span className="text-xl">💾</span>
+              <span className="text-base font-medium text-gray-700 flex-1">데이터 백업</span>
+              <span className="text-gray-300 text-lg">→</span>
+            </button>
           </div>
-          <span className="text-gray-300 text-lg">→</span>
-        </button>
+        </div>
       </div>
 
       {/* 운동 바텀시트 */}
