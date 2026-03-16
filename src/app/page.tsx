@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth-context'
 import { PinLogin } from '@/components/pin-login'
 import { PatientHome } from '@/components/patient-home'
 import { CaregiverHome } from '@/components/caregiver-home'
+import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 
 export default function Home() {
   const { user, isLoading } = useAuth()
@@ -20,12 +21,27 @@ export default function Home() {
   }
 
   if (!user) {
-    return <PinLogin />
+    return (
+      <>
+        <PinLogin />
+        <PwaInstallPrompt />
+      </>
+    )
   }
 
   if (user.role === 'patient') {
-    return <PatientHome />
+    return (
+      <>
+        <PatientHome />
+        <PwaInstallPrompt />
+      </>
+    )
   }
 
-  return <CaregiverHome />
+  return (
+    <>
+      <CaregiverHome />
+      <PwaInstallPrompt />
+    </>
+  )
 }

@@ -262,10 +262,10 @@ export function PatientHome() {
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-5 pt-6 pb-10 rounded-b-[2rem]">
         <div className="flex justify-between items-start mb-3">
           <div>
-            <p className="text-blue-200 text-sm">{greeting}</p>
-            <h1 className="text-2xl font-bold tracking-tight">{user?.name}님</h1>
+            <p className="text-blue-200 text-base">{greeting}</p>
+            <h1 className="text-3xl font-bold tracking-tight">{user?.name}님</h1>
           </div>
-          <button className="text-white/50 text-sm" onClick={logout}>나가기</button>
+          <button className="text-white/50 text-base py-2 px-3" onClick={logout}>나가기</button>
         </div>
         {todayRecord ? (
           <div className="bg-white/15 backdrop-blur rounded-2xl px-4 py-3 flex items-center gap-3">
@@ -290,10 +290,10 @@ export function PatientHome() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 -mt-5 space-y-3">
-        {/* 기록 버튼 */}
+        {/* 기록 버튼 - 시니어 친화적 큰 터치 영역 */}
         <Button
           onClick={() => setView('record')}
-          className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 shadow-lg rounded-2xl"
+          className="w-full h-16 text-xl font-bold bg-blue-600 hover:bg-blue-700 active:scale-[0.98] shadow-lg rounded-2xl transition-transform"
         >
           오늘의 건강 기록하기
         </Button>
@@ -313,9 +313,9 @@ export function PatientHome() {
             onClick={() => setExerciseOpen(true)}
           >
             <CardContent className="pt-4 pb-3 text-center">
-              <p className="text-2xl leading-none">🏃</p>
-              <p className="text-xl font-bold text-gray-900 mt-1.5">{todayExerciseMinutes}<span className="text-sm font-normal text-gray-400">분</span></p>
-              <p className="text-xs text-gray-400 mt-0.5">탭하여 운동 기록</p>
+              <p className="text-3xl leading-none">🏃</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1.5">{todayExerciseMinutes}<span className="text-base font-normal text-gray-400">분</span></p>
+              <p className="text-sm text-gray-400 mt-0.5">탭하여 운동 기록</p>
             </CardContent>
           </Card>
           <Card
@@ -323,7 +323,7 @@ export function PatientHome() {
             onClick={() => setView('appointment')}
           >
             <CardContent className="pt-4 pb-3 text-center">
-              <p className="text-2xl leading-none">🏥</p>
+              <p className="text-3xl leading-none">🏥</p>
               {daysUntil !== null ? (
                 <>
                   <p className="text-xl font-bold text-blue-600 mt-1.5">D-{daysUntil}</p>
@@ -360,27 +360,27 @@ export function PatientHome() {
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setView('info')}
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-gray-100 active:scale-[0.97] transition-transform"
+            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-4 shadow-sm border border-gray-100 active:scale-[0.97] transition-transform"
           >
-            <span className="text-2xl">💊</span>
-            <span className="text-sm font-medium text-gray-700">치료 정보</span>
+            <span className="text-3xl">💊</span>
+            <span className="text-base font-semibold text-gray-700">치료 정보</span>
           </button>
           <button
             onClick={() => setView('appointment')}
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-gray-100 active:scale-[0.97] transition-transform"
+            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-4 shadow-sm border border-gray-100 active:scale-[0.97] transition-transform"
           >
-            <span className="text-2xl">📋</span>
-            <span className="text-sm font-medium text-gray-700">진료 일정</span>
+            <span className="text-3xl">📋</span>
+            <span className="text-base font-semibold text-gray-700">진료 일정</span>
           </button>
         </div>
 
         {/* 격려 메시지 */}
-        <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl px-5 py-4 text-center border border-emerald-100">
-          <p className="text-3xl mb-1">💪</p>
-          <p className="text-base font-semibold text-emerald-800 leading-snug">
+        <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl px-5 py-5 text-center border border-emerald-100">
+          <p className="text-4xl mb-2">💪</p>
+          <p className="text-lg font-semibold text-emerald-800 leading-snug">
             위암 3기도 이기신 분,<br />이것도 반드시 이겨내실 수 있습니다
           </p>
-          <p className="text-xs text-emerald-600 mt-1">
+          <p className="text-sm text-emerald-600 mt-1.5">
             전 세계에서 M. abscessus 치료법이 빠르게 발전하고 있습니다
           </p>
         </div>

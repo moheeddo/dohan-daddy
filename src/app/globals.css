@@ -127,3 +127,38 @@
     @apply font-sans;
   }
 }
+
+/* PWA 설치 배너 애니메이션 */
+@keyframes slide-up-banner {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up-banner {
+  animation: slide-up-banner 0.35s ease-out;
+}
+
+/* 터치 하이라이트 제거 (모바일 UX) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 스크롤 개선 */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* PWA standalone 모드에서 상단 safe area */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
