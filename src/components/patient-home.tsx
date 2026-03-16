@@ -19,6 +19,7 @@ import {
   deleteExercise,
   getRecordStreak,
   hasYesterdayRecord,
+  saveDailyRecord,
 } from '@/lib/store'
 import { expandedArticles } from '@/lib/ntm-knowledge'
 import type { DailyRecord, ExerciseType } from '@/types/database'
@@ -244,6 +245,8 @@ export function PatientHome() {
   const [nextApptHospital, setNextApptHospital] = useState<string>('')
   const [streak, setStreak] = useState(0)
   const [yesterdayMissed, setYesterdayMissed] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [quickSaved, setQuickSaved] = useState(false)
 
   const loadData = () => {
     const today = getTodayString()
@@ -263,6 +266,32 @@ export function PatientHome() {
   }
 
   useEffect(() => { loadData() }, [])
+
+  // 빠른 컨디션 입력 (홈에서 바로 3초 기록)
+  const handleQuickCondition = (condition: number) => {
+    if (!user) return
+    const today = getTodayString()
+    const existing = getDailyRecordByDate(today)
+    saveDailyRecord({
+      user_id: user.id,
+      date: today,
+      overall_condition: condition,
+      cough_level: existing?.cough_level ?? 3,
+      sputum_amount: existing?.sputum_amount ?? 3,
+      sputum_color: existing?.sputum_color ?? 'clear',
+      breathing_difficulty: existing?.breathing_difficulty ?? 2,
+      fatigue_level: existing?.fatigue_level ?? 3,
+      dumping_symptom: existing?.dumping_symptom ?? false,
+      mood: existing?.mood ?? 3,
+    })
+    setQuickSaved(true)
+    setTimeout(() => setQuickSaved(false), 1500)
+    loadData()
+  }
+
+  const handleLogout = () => {
+    setShowLogoutConfirm(true)
+  }
 
   const now = new Date()
   const greeting = now.getHours() < 12 ? '좋은 아침이에요' : now.getHours() < 18 ? '좋은 오후예요' : '좋은 저녁이에요'
@@ -317,7 +346,7 @@ export function PatientHome() {
             <p className="text-blue-200 text-base">{greeting}</p>
             <h1 className="text-3xl font-bold tracking-tight">{user?.name}님</h1>
           </div>
-          <button className="text-white/50 text-base py-2 px-3" onClick={logout}>나가기</button>
+          <button className="text-white/50 text-base py-2 px-3" onClick={handleLogout}>나가기</button>
         </div>
         {todayRecord ? (
           <div className="bg-white/15 backdrop-blur rounded-2xl px-4 py-3 flex items-center gap-3">
@@ -331,13 +360,30 @@ export function PatientHome() {
               </p>
             </div>
           </div>
+        ) : quickSaved ? (
+          <div className="bg-emerald-500/30 backdrop-blur rounded-2xl px-4 py-4 text-center">
+            <p className="text-lg font-bold text-white">기록 완료!</p>
+          </div>
         ) : (
-          <button
-            onClick={() => setView('record')}
-            className="w-full bg-white/15 backdrop-blur rounded-2xl px-4 py-4 text-center active:bg-white/25 transition"
-          >
-            <p className="text-lg font-medium">오늘의 기록을 남겨보세요</p>
-          </button>
+          <div className="bg-white/15 backdrop-blur rounded-2xl px-4 py-4">
+            <p className="text-base text-white/80 text-center mb-3">오늘 컨디션은 어떠세요?</p>
+            <div className="flex justify-center gap-4">
+              {[
+                { value: 3, emoji: '😊', label: '좋음' },
+                { value: 2, emoji: '😐', label: '보통' },
+                { value: 1, emoji: '😔', label: '안좋음' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleQuickCondition(opt.value)}
+                  className="flex flex-col items-center gap-1 bg-white/15 rounded-2xl px-6 py-3 active:bg-white/30 transition"
+                >
+                  <span className="text-3xl">{opt.emoji}</span>
+                  <span className="text-sm font-medium text-white/90">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
@@ -442,6 +488,31 @@ export function PatientHome() {
         userId={user?.id || ''}
         onSaved={loadData}
       />
+
+      {/* 로그아웃 확인 */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">나가시겠어요?</h3>
+            <p className="text-base text-gray-500 text-center mb-5">로그인 화면으로 돌아갑니다</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 h-14 rounded-2xl bg-gray-100 text-lg font-semibold text-gray-700 active:bg-gray-200 transition"
+              >
+                취소
+              </button>
+              <button
+                onClick={logout}
+                className="flex-1 h-14 rounded-2xl bg-red-500 text-lg font-semibold text-white active:bg-red-600 transition"
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 하단 탭 네비게이션 */}
       <BottomTabBar activeTab={view} onTabChange={(tab) => { setView(tab); loadData() }} />
