@@ -16,6 +16,8 @@ import { haptic } from '@/lib/haptic'
 import { FontSizeSelector } from '@/components/font-size-control'
 import { EmergencyCall } from '@/components/emergency-call'
 import { StepCounter } from '@/components/step-counter'
+import { WeatherHealthTip } from '@/components/weather-health-tip'
+import { VisitChecklist } from '@/components/visit-checklist'
 import {
   getDailyRecordByDate,
   getRecentDailyRecords,
@@ -140,21 +142,25 @@ function WeeklyChart({ records, onTap }: { records: DailyRecord[]; onTap: () => 
   )
 }
 
-// ─── 빠른 메모 ──────────────────
+// ─── 빠른 메모 (음성 입력 지원) ──────────────────
 function QuickMemo({ userId }: { userId: string }) {
   const [memo, setMemo] = useState('')
   const [saved, setSaved] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [hasSpeechAPI, setHasSpeechAPI] = useState(false)
   const today = getTodayString()
+
+  useEffect(() => {
+    setHasSpeechAPI('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+  }, [])
 
   const handleSave = () => {
     if (!memo.trim()) return
-    // 기존 기록에 메모 추가
     const existing = getDailyRecordByDate(today)
     if (existing) {
       const newNotes = existing.notes ? `${existing.notes}\n${memo.trim()}` : memo.trim()
       saveDailyRecord({ ...existing, notes: newNotes })
     } else {
-      // 기록이 없으면 기본값으로 새 기록 생성 + 메모
       saveDailyRecord({
         user_id: userId,
         date: today,
@@ -175,6 +181,29 @@ function QuickMemo({ userId }: { userId: string }) {
     setTimeout(() => setSaved(false), 1500)
   }
 
+  const startVoice = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognitionCtor = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
+    if (!SpeechRecognitionCtor) return
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recognition = new SpeechRecognitionCtor() as any
+    recognition.lang = 'ko-KR'
+    recognition.interimResults = false
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (e: any) => {
+      const transcript = e.results[0][0].transcript as string
+      setMemo(prev => prev ? `${prev} ${transcript}` : transcript)
+    }
+    recognition.onend = () => setIsListening(false)
+    recognition.onerror = () => setIsListening(false)
+
+    haptic('light')
+    setIsListening(true)
+    recognition.start()
+  }
+
   return (
     <div className="flex gap-2">
       <input
@@ -182,9 +211,24 @@ function QuickMemo({ userId }: { userId: string }) {
         value={memo}
         onChange={e => setMemo(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && handleSave()}
-        placeholder="오늘 특이사항을 메모하세요..."
-        className="flex-1 h-12 px-4 rounded-2xl bg-white border border-gray-200 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 shadow-sm"
+        placeholder={isListening ? '듣고 있어요...' : '메모하세요 (🎤 말로도 가능)'}
+        className={`flex-1 h-12 px-4 rounded-2xl bg-white border text-base text-gray-900 placeholder:text-gray-400 focus:outline-none shadow-sm ${
+          isListening ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+        }`}
       />
+      {hasSpeechAPI && (
+        <button
+          onClick={startVoice}
+          disabled={isListening}
+          className={`h-12 w-12 rounded-2xl flex items-center justify-center text-xl active:scale-95 transition flex-shrink-0 ${
+            isListening
+              ? 'bg-red-500 text-white animate-pulse'
+              : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          🎤
+        </button>
+      )}
       <button
         onClick={handleSave}
         disabled={!memo.trim()}
@@ -694,6 +738,11 @@ export function PatientHome() {
           </Card>
         </div>
 
+        {/* 진료 전 체크리스트 (D-3부터 표시) */}
+        {nextApptDate && (
+          <VisitChecklist appointmentDate={nextApptDate} hospital={nextApptHospital} />
+        )}
+
         {/* 진료 요약 바로가기 */}
         <button
           onClick={() => setView('summary')}
@@ -723,6 +772,9 @@ export function PatientHome() {
             </div>
           </CardContent>
         </Card>
+
+        {/* 오늘의 건강 팁 */}
+        <WeatherHealthTip />
 
         {/* 격려 메시지 (날짜별 변경) */}
         {(() => {

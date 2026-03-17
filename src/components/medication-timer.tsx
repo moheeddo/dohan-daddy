@@ -156,6 +156,30 @@ export function MedicationTimer() {
     haptic('success')
   }
 
+  // 주간 복용 통계
+  const weekStats = (() => {
+    const days: { day: string; taken: number; total: number }[] = []
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토']
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const key = `med_taken_${d.toISOString().split('T')[0]}`
+      let taken = 0, total = 0
+      try {
+        const saved = typeof window !== 'undefined' ? localStorage.getItem(key) : null
+        if (saved) {
+          const dayMeds: MedTime[] = JSON.parse(saved)
+          total = dayMeds.length
+          taken = dayMeds.filter(m => m.taken).length
+        }
+      } catch { /* ignore */ }
+      days.push({ day: dayNames[d.getDay()], taken, total })
+    }
+    return days
+  })()
+  const weekTotalTaken = weekStats.reduce((s, d) => s + d.taken, 0)
+  const weekTotalMeds = weekStats.reduce((s, d) => s + d.total, 0)
+
   const takenCount = meds.filter(m => m.taken).length
   const totalCount = meds.length
 
@@ -224,6 +248,37 @@ export function MedicationTimer() {
           </div>
         )
       })}
+
+      {/* 주간 복용 통계 */}
+      {weekTotalMeds > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-gray-500">이번 주 복용률</p>
+            <p className="text-sm font-bold text-blue-600">
+              {weekTotalMeds > 0 ? Math.round((weekTotalTaken / weekTotalMeds) * 100) : 0}%
+            </p>
+          </div>
+          <div className="flex justify-between gap-1">
+            {weekStats.map((d, i) => {
+              const isToday = i === weekStats.length - 1
+              const rate = d.total > 0 ? d.taken / d.total : 0
+              return (
+                <div key={i} className="flex flex-col items-center gap-0.5 flex-1">
+                  <div className={`w-full h-6 rounded flex items-end overflow-hidden ${d.total > 0 ? 'bg-gray-100' : 'bg-transparent'}`}>
+                    {d.total > 0 && (
+                      <div
+                        className={`w-full rounded transition-all ${rate === 1 ? 'bg-emerald-400' : rate > 0 ? 'bg-amber-400' : 'bg-gray-200'}`}
+                        style={{ height: `${Math.max(rate * 100, rate > 0 ? 20 : 0)}%` }}
+                      />
+                    )}
+                  </div>
+                  <span className={`text-[10px] ${isToday ? 'font-bold text-blue-600' : 'text-gray-400'}`}>{d.day}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 약 스케줄 설정 모달 */}
       {showSettings && (

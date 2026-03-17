@@ -313,7 +313,7 @@ export function VisitSummary({ onBack }: VisitSummaryProps) {
         )}
 
         {/* 공유/프린트 */}
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => {
               const text = generateTextSummary()
@@ -324,15 +324,42 @@ export function VisitSummary({ onBack }: VisitSummaryProps) {
                 alert('요약이 클립보드에 복사되었습니다')
               }
             }}
-            className="flex-1 h-14 bg-blue-600 text-white text-lg font-bold rounded-2xl active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="h-14 bg-blue-600 text-white text-lg font-bold rounded-2xl active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             <span>📤</span> 공유하기
           </button>
           <button
+            onClick={() => {
+              const text = generateTextSummary()
+              // 카카오톡 공유 (모바일에서 카카오톡 URL 스킴)
+              const encoded = encodeURIComponent(text)
+              const kakaoUrl = `https://story.kakao.com/share?url=${encodeURIComponent(window.location.href)}&text=${encoded}`
+              if (navigator.share) {
+                navigator.share({ title: '아버지 건강 기록', text: `[아버지 건강 기록 요약]\n\n${text}` })
+              } else {
+                window.open(kakaoUrl, '_blank')
+              }
+            }}
+            className="h-14 bg-yellow-400 text-yellow-900 text-lg font-bold rounded-2xl active:bg-yellow-500 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            💬 카톡 공유
+          </button>
+          <button
             onClick={() => window.print()}
-            className="h-14 px-6 bg-gray-100 text-gray-700 text-lg font-bold rounded-2xl active:bg-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="h-14 bg-gray-100 text-gray-700 text-lg font-bold rounded-2xl active:bg-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             <span>🖨️</span> 인쇄
+          </button>
+          <button
+            onClick={() => {
+              const text = generateTextSummary()
+              navigator.clipboard.writeText(text).then(() => {
+                alert('복사 완료! 카카오톡에 붙여넣기 하세요')
+              })
+            }}
+            className="h-14 bg-gray-100 text-gray-700 text-lg font-bold rounded-2xl active:bg-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            📋 복사하기
           </button>
         </div>
 
