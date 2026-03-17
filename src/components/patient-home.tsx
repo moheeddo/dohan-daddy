@@ -13,7 +13,7 @@ import { VisitSummary } from '@/components/visit-summary'
 import { DataBackup } from '@/components/data-backup'
 import { MedicationTimer } from '@/components/medication-timer'
 import { haptic } from '@/lib/haptic'
-import { FontSizeSelector } from '@/components/font-size-control'
+import { FontSizeSelector, ThemeSelector } from '@/components/font-size-control'
 import { EmergencyCall } from '@/components/emergency-call'
 import { StepCounter } from '@/components/step-counter'
 import { WeatherHealthTip } from '@/components/weather-health-tip'
@@ -212,8 +212,8 @@ function QuickMemo({ userId }: { userId: string }) {
         onChange={e => setMemo(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && handleSave()}
         placeholder={isListening ? '듣고 있어요...' : '메모하세요 (🎤 말로도 가능)'}
-        className={`flex-1 h-12 px-4 rounded-2xl bg-white border text-base text-gray-900 placeholder:text-gray-400 focus:outline-none shadow-sm ${
-          isListening ? 'border-red-400 bg-red-50' : 'border-gray-200 focus:border-blue-400'
+        className={`flex-1 h-12 px-4 rounded-2xl bg-white dark:bg-gray-800 border text-base text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none shadow-sm ${
+          isListening ? 'border-red-400 bg-red-50 dark:bg-red-900/30' : 'border-gray-200 dark:border-gray-600 focus:border-blue-400'
         }`}
       />
       {hasSpeechAPI && (
@@ -301,11 +301,11 @@ function QuickExerciseSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30" />
       <div
-        className="relative w-full max-w-lg bg-white rounded-t-3xl p-6 pb-10 animate-slide-up"
+        className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-t-3xl p-6 pb-10 animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
-        <h2 className="text-xl font-bold text-gray-900 mb-4">오늘의 운동</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">오늘의 운동</h2>
 
         {/* 기존 기록 */}
         {todayExercises.length > 0 && (
@@ -380,11 +380,12 @@ const TAB_ITEMS = [
   { id: 'record' as const, label: '기록', icon: '📝' },
   { id: 'info' as const, label: '치료정보', icon: '💊' },
   { id: 'appointment' as const, label: '진료', icon: '🏥' },
+  { id: 'more' as const, label: '더보기', icon: '⋯' },
 ]
 
 function BottomTabBar({ activeTab, onTabChange }: { activeTab: ViewType; onTabChange: (tab: ViewType) => void }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-lg mx-auto flex">
         {TAB_ITEMS.map(tab => (
           <button
@@ -392,8 +393,8 @@ function BottomTabBar({ activeTab, onTabChange }: { activeTab: ViewType; onTabCh
             onClick={() => onTabChange(tab.id)}
             className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors select-none ${
               activeTab === tab.id
-                ? 'text-blue-600'
-                : 'text-gray-400'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-400 dark:text-gray-500'
             }`}
           >
             <span className="text-2xl leading-none">{tab.icon}</span>
@@ -406,7 +407,7 @@ function BottomTabBar({ activeTab, onTabChange }: { activeTab: ViewType; onTabCh
 }
 
 // ─── 메인 ──────────────────────────────
-type ViewType = 'home' | 'record' | 'info' | 'appointment' | 'summary' | 'backup'
+type ViewType = 'home' | 'record' | 'info' | 'appointment' | 'summary' | 'backup' | 'more'
 
 export function PatientHome() {
   const { user, logout } = useAuth()
@@ -422,6 +423,8 @@ export function PatientHome() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [quickSaved, setQuickSaved] = useState(false)
   const [showBackupReminder, setShowBackupReminder] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(true) // 기본 true로 → PWA 설치 버튼 숨김
+
 
   const loadData = () => {
     const today = getTodayString()
@@ -441,6 +444,10 @@ export function PatientHome() {
   }
 
   useEffect(() => { loadData() }, [])
+
+  useEffect(() => {
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches)
+  }, [])
 
   // 알림 권한 요청 + 진료일 리마인더
   useEffect(() => {
@@ -527,7 +534,7 @@ export function PatientHome() {
   // ─── 서브 화면들 ───
   if (view === 'record') {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
         <header className="bg-blue-600 text-white px-5 py-4 flex items-center gap-3">
           <button className="text-xl py-1 px-2" onClick={() => { setView('home'); loadData() }}>←</button>
           <h1 className="text-xl font-bold">오늘의 건강 기록</h1>
@@ -566,15 +573,124 @@ export function PatientHome() {
   if (view === 'backup') {
     return (
       <div className="pb-20">
-        <DataBackup onBack={() => { setView('home'); loadData() }} />
-        <BottomTabBar activeTab={'home'} onTabChange={(tab) => { setView(tab); loadData() }} />
+        <DataBackup onBack={() => { setView('more'); loadData() }} />
+        <BottomTabBar activeTab={'more'} onTabChange={(tab) => { setView(tab); loadData() }} />
+      </div>
+    )
+  }
+  if (view === 'more') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+        <div className="bg-gradient-to-br from-gray-700 to-gray-800 text-white px-5 pt-6 pb-6 rounded-b-[2rem]">
+          <h1 className="text-2xl font-bold">더보기</h1>
+          <p className="text-gray-300 text-base mt-1">설정, 도구, 정보</p>
+        </div>
+        <div className="max-w-lg mx-auto px-4 -mt-3 space-y-3">
+          {/* 긴급 연락처 */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-2">긴급 연락처</p>
+            <EmergencyCall />
+          </div>
+
+          {/* 진료 요약 */}
+          <button
+            onClick={() => setView('summary')}
+            className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-blue-200 dark:border-blue-800 px-5 py-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
+          >
+            <span className="text-3xl">📋</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100">진료 요약 보기</p>
+              <p className="text-sm text-gray-500">기록을 정리해서 의사에게 보여주세요</p>
+            </div>
+            <span className="text-gray-300 text-xl">→</span>
+          </button>
+
+          {/* 오늘의 희망 카드 */}
+          <Card className="shadow-sm border-l-4 border-l-blue-500 overflow-hidden">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Badge variant="secondary" className="text-sm">{catLabels[todayArticle.category]}</Badge>
+                <span className="text-sm text-gray-500">{todayArticle.published_at}</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 leading-snug mb-1.5">{todayArticle.title_ko}</h3>
+              <p className="text-base text-gray-600 leading-relaxed">{todayArticle.summary_ko}</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-sm text-gray-500">희망</span>
+                <Progress value={todayArticle.hope_score} className="flex-1 h-2" />
+                <span className="text-sm font-bold text-blue-600">{todayArticle.hope_score}%</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 설정 */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-200">설정</p>
+            <FontSizeSelector />
+            <ThemeSelector />
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+              <button
+                onClick={() => setView('backup')}
+                className="w-full flex items-center gap-3 active:bg-gray-50 dark:active:bg-gray-700 transition text-left rounded-xl px-1 py-2"
+              >
+                <span className="text-xl">💾</span>
+                <span className="text-base font-medium text-gray-700 dark:text-gray-200 flex-1">데이터 백업</span>
+                <span className="text-gray-300 text-lg">→</span>
+              </button>
+              {!isStandalone && (
+                <button
+                  onClick={() => {
+                    // PWA 배너 다시 표시하도록 dismissed 삭제
+                    localStorage.removeItem('pwa_install_dismissed')
+                    window.location.reload()
+                  }}
+                  className="w-full flex items-center gap-3 active:bg-gray-50 dark:active:bg-gray-700 transition text-left rounded-xl px-1 py-2 mt-1"
+                >
+                  <span className="text-xl">📲</span>
+                  <span className="text-base font-medium text-gray-700 dark:text-gray-200 flex-1">홈 화면에 추가</span>
+                  <span className="text-gray-300 text-lg">→</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 격려 메시지 */}
+          {(() => {
+            const messages = [
+              { emoji: '💪', main: '위암 3기도 이기신 분,\n이것도 반드시 이겨내실 수 있습니다', sub: '전 세계에서 M. abscessus 치료법이 빠르게 발전하고 있습니다' },
+              { emoji: '🌅', main: '오늘도 건강을 위한\n한 걸음을 내딛으셨습니다', sub: '꾸준한 기록이 치료에 큰 도움이 됩니다' },
+              { emoji: '🌿', main: '면역력은 매일매일\n조금씩 좋아지고 있습니다', sub: '규칙적인 운동과 영양이 가장 좋은 약입니다' },
+              { emoji: '⭐', main: '아버지의 노력을\n온 가족이 응원합니다', sub: '건강 기록을 통해 의사 선생님도 더 정확한 진료를 할 수 있습니다' },
+              { emoji: '🏔️', main: '산을 오르듯\n한 발짝씩 나아가고 계십니다', sub: 'NTM 치료는 시간이 걸리지만, 포기하지 않는 것이 중요합니다' },
+              { emoji: '🌻', main: '오늘 하루도\n감사하며 시작해봐요', sub: '긍정적인 마음이 면역력 향상에 도움이 됩니다' },
+              { emoji: '🤝', main: '혼자가 아닙니다\n함께 이겨낼 수 있습니다', sub: '심태선 교수님과 함께하는 치료, 꼭 좋은 결과가 있을 것입니다' },
+            ]
+            const dayIndex = now.getDate() % messages.length
+            const msg = messages[dayIndex]
+            return (
+              <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl px-5 py-5 text-center border border-emerald-100">
+                <p className="text-4xl mb-2">{msg.emoji}</p>
+                <p className="text-lg font-semibold text-emerald-800 leading-snug whitespace-pre-line">{msg.main}</p>
+                <p className="text-sm text-emerald-700 mt-1.5">{msg.sub}</p>
+              </div>
+            )
+          })()}
+
+          {/* 로그아웃 */}
+          <button
+            onClick={handleLogout}
+            className="w-full text-center text-gray-400 text-base py-3"
+          >
+            로그아웃
+          </button>
+        </div>
+        <BottomTabBar activeTab={view} onTabChange={(tab) => { setView(tab); loadData() }} />
       </div>
     )
   }
 
   // ─── 홈 ───
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
       {/* 헤더 */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-5 pt-6 pb-10 rounded-b-[2rem]">
         <div className="flex justify-between items-start mb-3">
@@ -582,7 +698,7 @@ export function PatientHome() {
             <p className="text-blue-200 text-base">{now.getMonth() + 1}월 {now.getDate()}일 · {greeting}</p>
             <h1 className="text-3xl font-bold tracking-tight">{user?.name}님</h1>
           </div>
-          <button className="text-white/50 text-base py-2 px-3" onClick={handleLogout}>나가기</button>
+          <button className="text-white/50 text-base py-2 px-3" onClick={() => setView('more')}>더보기</button>
         </div>
         {todayRecord ? (
           <div className="bg-white/15 backdrop-blur rounded-2xl px-4 py-3 flex items-center gap-3">
@@ -652,7 +768,7 @@ export function PatientHome() {
         {/* 스트릭 카운터 + 기록 버튼 */}
         <div className="flex gap-3">
           {streak > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center px-5 py-3 flex-shrink-0">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center px-5 py-3 flex-shrink-0">
               <p className="text-2xl font-bold text-blue-600">{streak}</p>
               <p className="text-xs font-medium text-gray-500">연속 기록</p>
             </div>
@@ -743,81 +859,8 @@ export function PatientHome() {
           <VisitChecklist appointmentDate={nextApptDate} hospital={nextApptHospital} />
         )}
 
-        {/* 진료 요약 바로가기 */}
-        <button
-          onClick={() => setView('summary')}
-          className="w-full bg-white rounded-2xl shadow-sm border border-blue-200 px-5 py-4 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
-        >
-          <span className="text-3xl">📋</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-lg font-bold text-gray-900">진료 요약 보기</p>
-            <p className="text-sm text-gray-500">기록을 정리해서 의사에게 보여주세요</p>
-          </div>
-          <span className="text-gray-300 text-xl">→</span>
-        </button>
-
-        {/* 오늘의 희망 카드 */}
-        <Card className="shadow-sm border-l-4 border-l-blue-500 overflow-hidden">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Badge variant="secondary" className="text-sm">{catLabels[todayArticle.category]}</Badge>
-              <span className="text-sm text-gray-500">{todayArticle.published_at}</span>
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 leading-snug mb-1.5">{todayArticle.title_ko}</h3>
-            <p className="text-base text-gray-600 leading-relaxed">{todayArticle.summary_ko}</p>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-sm text-gray-500">희망</span>
-              <Progress value={todayArticle.hope_score} className="flex-1 h-2" />
-              <span className="text-sm font-bold text-blue-600">{todayArticle.hope_score}%</span>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* 오늘의 건강 팁 */}
         <WeatherHealthTip />
-
-        {/* 격려 메시지 (날짜별 변경) */}
-        {(() => {
-          const messages = [
-            { emoji: '💪', main: '위암 3기도 이기신 분,\n이것도 반드시 이겨내실 수 있습니다', sub: '전 세계에서 M. abscessus 치료법이 빠르게 발전하고 있습니다' },
-            { emoji: '🌅', main: '오늘도 건강을 위한\n한 걸음을 내딛으셨습니다', sub: '꾸준한 기록이 치료에 큰 도움이 됩니다' },
-            { emoji: '🌿', main: '면역력은 매일매일\n조금씩 좋아지고 있습니다', sub: '규칙적인 운동과 영양이 가장 좋은 약입니다' },
-            { emoji: '⭐', main: '아버지의 노력을\n온 가족이 응원합니다', sub: '건강 기록을 통해 의사 선생님도 더 정확한 진료를 할 수 있습니다' },
-            { emoji: '🏔️', main: '산을 오르듯\n한 발짝씩 나아가고 계십니다', sub: 'NTM 치료는 시간이 걸리지만, 포기하지 않는 것이 중요합니다' },
-            { emoji: '🌻', main: '오늘 하루도\n감사하며 시작해봐요', sub: '긍정적인 마음이 면역력 향상에 도움이 됩니다' },
-            { emoji: '🤝', main: '혼자가 아닙니다\n함께 이겨낼 수 있습니다', sub: '심태선 교수님과 함께하는 치료, 꼭 좋은 결과가 있을 것입니다' },
-          ]
-          const dayIndex = now.getDate() % messages.length
-          const msg = messages[dayIndex]
-          return (
-            <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl px-5 py-5 text-center border border-emerald-100">
-              <p className="text-4xl mb-2">{msg.emoji}</p>
-              <p className="text-lg font-semibold text-emerald-800 leading-snug whitespace-pre-line">{msg.main}</p>
-              <p className="text-sm text-emerald-700 mt-1.5">{msg.sub}</p>
-            </div>
-          )
-        })()}
-
-        {/* 긴급 전화 */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4">
-          <p className="text-base font-semibold text-gray-700 mb-2">긴급 연락처</p>
-          <EmergencyCall />
-        </div>
-
-        {/* 설정 영역 */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">
-          <FontSizeSelector />
-          <div className="border-t border-gray-100 pt-3">
-            <button
-              onClick={() => setView('backup')}
-              className="w-full flex items-center gap-3 active:bg-gray-50 transition text-left rounded-xl px-1 py-1"
-            >
-              <span className="text-xl">💾</span>
-              <span className="text-base font-medium text-gray-700 flex-1">데이터 백업</span>
-              <span className="text-gray-300 text-lg">→</span>
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* 운동 바텀시트 */}
@@ -832,9 +875,9 @@ export function PatientHome() {
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={() => setShowLogoutConfirm(false)}>
           <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">나가시겠어요?</h3>
-            <p className="text-base text-gray-500 text-center mb-5">로그인 화면으로 돌아갑니다</p>
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center mb-2">나가시겠어요?</h3>
+            <p className="text-base text-gray-500 dark:text-gray-400 text-center mb-5">로그인 화면으로 돌아갑니다</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
