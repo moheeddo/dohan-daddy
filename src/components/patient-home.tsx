@@ -18,6 +18,7 @@ import { EmergencyCall } from '@/components/emergency-call'
 import { StepCounter } from '@/components/step-counter'
 import { WeatherHealthTip } from '@/components/weather-health-tip'
 import { VisitChecklist } from '@/components/visit-checklist'
+import { WaterTracker } from '@/components/water-tracker'
 import {
   getDailyRecordByDate,
   getRecentDailyRecords,
@@ -926,12 +927,19 @@ export function PatientHome() {
           </Card>
         )}
 
-        {/* 걸음수 카운터 */}
-        <Card className="shadow-sm">
-          <CardContent className="pt-4 pb-3">
-            <StepCounter />
-          </CardContent>
-        </Card>
+        {/* 걸음수 + 수분 */}
+        <div className="grid grid-cols-1 gap-3">
+          <Card className="shadow-sm">
+            <CardContent className="pt-4 pb-3">
+              <StepCounter />
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm">
+            <CardContent className="pt-4 pb-3">
+              <WaterTracker />
+            </CardContent>
+          </Card>
+        </div>
 
         {/* 운동 / 진료 */}
         <div className="grid grid-cols-2 gap-3">

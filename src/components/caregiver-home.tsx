@@ -23,6 +23,21 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar,
 } from 'recharts'
 
+// 수분 섭취 & 걸음 수 읽기 (환자 측 localStorage에서)
+function getTodayWaterIntake(): number {
+  try {
+    const key = `daddy_water_${new Date().toISOString().split('T')[0]}`
+    return parseInt(localStorage.getItem(key) || '0', 10)
+  } catch { return 0 }
+}
+
+function getTodaySteps(): number {
+  try {
+    const key = `daddy_steps_${new Date().toISOString().split('T')[0]}`
+    return parseInt(localStorage.getItem(key) || '0', 10)
+  } catch { return 0 }
+}
+
 // 관리자용 약 복용 현황 (읽기 전용)
 function MedicationStatus() {
   const todayKey = `med_taken_${new Date().toISOString().split('T')[0]}`
@@ -40,19 +55,19 @@ function MedicationStatus() {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 mb-1">
-        <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+        <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${takenCount === meds.length ? 'bg-emerald-500' : 'bg-amber-400'}`}
             style={{ width: `${(takenCount / meds.length) * 100}%` }}
           />
         </div>
-        <span className="text-sm font-bold text-gray-700">{takenCount}/{meds.length}</span>
+        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{takenCount}/{meds.length}</span>
       </div>
       {meds.map(med => (
         <div key={med.id} className="flex items-center justify-between text-sm">
           <span className="flex items-center gap-2">
             <span className={med.taken ? 'text-emerald-500' : 'text-gray-300'}>{med.taken ? '✓' : '○'}</span>
-            <span className={med.taken ? 'text-gray-700' : 'text-gray-400'}>{med.label}</span>
+            <span className={med.taken ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}>{med.label}</span>
           </span>
           <span className="text-gray-400">
             {med.taken && med.takenAt ? med.takenAt : `${String(med.hour).padStart(2, '0')}:${String(med.minute).padStart(2, '0')}`}
@@ -93,14 +108,14 @@ function AlertBanner({ records }: { records: DailyRecord[] }) {
   if (alerts.length === 0) return null
 
   return (
-    <Card className="border-red-200 bg-red-50">
+    <Card className="border-red-200 bg-red-50 dark:bg-red-900/30 dark:border-red-800">
       <CardContent className="pt-4">
         <div className="flex items-start gap-2">
           <span className="text-2xl">⚠️</span>
           <div>
-            <p className="font-bold text-red-800 mb-1">주의 알림</p>
+            <p className="font-bold text-red-800 dark:text-red-300 mb-1">주의 알림</p>
             {alerts.map((alert, i) => (
-              <p key={i} className="text-red-700">• {alert}</p>
+              <p key={i} className="text-red-700 dark:text-red-400">• {alert}</p>
             ))}
           </div>
         </div>
@@ -165,7 +180,7 @@ export function CaregiverHome() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
       {/* 헤더 */}
       <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-4">
         <div className="flex justify-between items-center">
@@ -180,7 +195,7 @@ export function CaregiverHome() {
       </div>
 
       {/* 상단 탭 네비게이션 */}
-      <div className="flex overflow-x-auto border-b bg-white sticky top-0 z-10">
+      <div className="flex overflow-x-auto border-b bg-white dark:bg-gray-800 dark:border-gray-700 sticky top-0 z-10">
         {([
           { id: 'dashboard' as const, label: '현황' },
           { id: 'trends' as const, label: '트렌드' },
@@ -218,37 +233,37 @@ export function CaregiverHome() {
                 {todayRecord ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-blue-50 p-3 rounded-lg text-center">
-                        <p className="text-sm text-gray-500">컨디션</p>
+                      <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg text-center">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">컨디션</p>
                         <p className="text-3xl">{todayRecord.overall_condition === 3 ? '😊' : todayRecord.overall_condition === 2 ? '😐' : '😔'}</p>
                       </div>
-                      <div className="bg-blue-50 p-3 rounded-lg text-center">
-                        <p className="text-sm text-gray-500">기분</p>
+                      <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg text-center">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">기분</p>
                         <p className="text-3xl">{['😢', '😔', '😐', '🙂', '😊'][todayRecord.mood - 1]}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-4 gap-2">
                       <div className="text-center">
                         <p className="text-xs text-gray-500">기침</p>
-                        <p className={`text-lg font-bold ${todayRecord.cough_level >= 7 ? 'text-red-600' : 'text-gray-800'}`}>
+                        <p className={`text-lg font-bold ${todayRecord.cough_level >= 7 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>
                           {todayRecord.cough_level}/10
                         </p>
                       </div>
                       <div className="text-center">
                         <p className="text-xs text-gray-500">가래</p>
-                        <p className={`text-lg font-bold ${todayRecord.sputum_amount >= 7 ? 'text-red-600' : 'text-gray-800'}`}>
+                        <p className={`text-lg font-bold ${todayRecord.sputum_amount >= 7 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>
                           {todayRecord.sputum_amount}/10
                         </p>
                       </div>
                       <div className="text-center">
                         <p className="text-xs text-gray-500">호흡곤란</p>
-                        <p className={`text-lg font-bold ${todayRecord.breathing_difficulty >= 7 ? 'text-red-600' : 'text-gray-800'}`}>
+                        <p className={`text-lg font-bold ${todayRecord.breathing_difficulty >= 7 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>
                           {todayRecord.breathing_difficulty}/10
                         </p>
                       </div>
                       <div className="text-center">
                         <p className="text-xs text-gray-500">피로</p>
-                        <p className={`text-lg font-bold ${todayRecord.fatigue_level >= 7 ? 'text-red-600' : 'text-gray-800'}`}>
+                        <p className={`text-lg font-bold ${todayRecord.fatigue_level >= 7 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>
                           {todayRecord.fatigue_level}/10
                         </p>
                       </div>
@@ -280,6 +295,45 @@ export function CaregiverHome() {
                     <p>오늘 아직 기록이 없습니다</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* 생활 모니터링 (수분/걸음) */}
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="pb-2">
+                <CardTitle className="dark:text-gray-100">생활 모니터링</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-xl text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">💧 수분 섭취</p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      {getTodayWaterIntake()}
+                      <span className="text-sm font-normal text-gray-400 dark:text-gray-500">ml</span>
+                    </p>
+                    <div className="mt-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${getTodayWaterIntake() >= 1500 ? 'bg-emerald-500' : 'bg-blue-400'}`}
+                        style={{ width: `${Math.min((getTodayWaterIntake() / 1500) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">목표 1,500ml</p>
+                  </div>
+                  <div className="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-xl text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">🚶 걸음 수</p>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                      {getTodaySteps().toLocaleString()}
+                      <span className="text-sm font-normal text-gray-400 dark:text-gray-500">보</span>
+                    </p>
+                    <div className="mt-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${getTodaySteps() >= 5000 ? 'bg-emerald-500' : 'bg-orange-400'}`}
+                        style={{ width: `${Math.min((getTodaySteps() / 5000) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">목표 5,000보</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -470,7 +524,7 @@ export function CaregiverHome() {
             </CardHeader>
             <CardContent>
               <div className="relative">
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-600" />
                 {treatmentTimeline.map((item, i) => (
                   <div key={i} className="relative pl-10 pb-8 last:pb-0">
                     <div className={`absolute left-2.5 w-3 h-3 rounded-full border-2 ${
@@ -481,7 +535,7 @@ export function CaregiverHome() {
                     }`} />
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-gray-800">{item.date}</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-200">{item.date}</span>
                         <Badge variant={
                           item.type === 'current' ? 'default' :
                           item.type === 'surgery' ? 'destructive' :
@@ -490,7 +544,7 @@ export function CaregiverHome() {
                           {item.event}
                         </Badge>
                       </div>
-                      <p className="text-gray-600">{item.detail}</p>
+                      <p className="text-gray-600 dark:text-gray-400">{item.detail}</p>
                     </div>
                   </div>
                 ))}
@@ -499,11 +553,11 @@ export function CaregiverHome() {
               <Separator className="my-6" />
 
               {/* 검사 기록 */}
-              <h3 className="font-bold text-gray-800 mb-3">검사 기록</h3>
+              <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-3">검사 기록</h3>
               {medicalRecords.length > 0 ? (
                 <div className="space-y-3">
                   {medicalRecords.sort((a, b) => b.date.localeCompare(a.date)).map((mr, i) => (
-                    <div key={i} className="bg-gray-50 p-3 rounded-lg">
+                    <div key={i} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                       <div className="flex justify-between mb-1">
                         <span className="font-medium">{mr.date}</span>
                         <span className="text-sm text-gray-500">{mr.hospital}</span>
@@ -532,13 +586,13 @@ export function CaregiverHome() {
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center" onClick={() => setShowLogoutConfirm(false)}>
           <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-2">나가시겠어요?</h3>
-            <p className="text-base text-gray-500 text-center mb-5">로그인 화면으로 돌아갑니다</p>
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center mb-2">나가시겠어요?</h3>
+            <p className="text-base text-gray-500 dark:text-gray-400 text-center mb-5">로그인 화면으로 돌아갑니다</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 h-14 rounded-2xl bg-gray-100 text-lg font-semibold text-gray-700 active:bg-gray-200 transition"
+                className="flex-1 h-14 rounded-2xl bg-gray-100 dark:bg-gray-700 text-lg font-semibold text-gray-700 dark:text-gray-200 active:bg-gray-200 dark:active:bg-gray-600 transition"
               >
                 취소
               </button>
