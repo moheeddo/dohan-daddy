@@ -34,6 +34,77 @@ import {
 import { expandedArticles } from '@/lib/ntm-knowledge'
 import type { DailyRecord, ExerciseType } from '@/types/database'
 
+// ─── 증상 추세 미니 차트 (2주) ──────────────────
+function SymptomTrendChart({ records }: { records: DailyRecord[] }) {
+  if (records.length < 3) return null
+
+  const metrics = [
+    { key: 'cough_level' as const, label: '기침', color: '#f59e0b' },
+    { key: 'sputum_amount' as const, label: '가래', color: '#10b981' },
+    { key: 'fatigue_level' as const, label: '피로', color: '#8b5cf6' },
+  ]
+
+  const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date)).slice(-14)
+  const w = 280, h = 80, px = 8, py = 8
+  const plotW = w - px * 2, plotH = h - py * 2
+  const step = sorted.length > 1 ? plotW / (sorted.length - 1) : plotW
+
+  const makePath = (key: 'cough_level' | 'sputum_amount' | 'fatigue_level') => {
+    return sorted.map((r, i) => {
+      const x = px + i * step
+      const y = py + plotH - (r[key] / 10) * plotH
+      return `${i === 0 ? 'M' : 'L'}${x},${y}`
+    }).join(' ')
+  }
+
+  // 평균 계산
+  const avgCough = (sorted.reduce((s, r) => s + r.cough_level, 0) / sorted.length).toFixed(1)
+  const avgSputum = (sorted.reduce((s, r) => s + r.sputum_amount, 0) / sorted.length).toFixed(1)
+  const avgFatigue = (sorted.reduce((s, r) => s + r.fatigue_level, 0) / sorted.length).toFixed(1)
+
+  // 추세 (최근 3일 vs 이전)
+  const recent3 = sorted.slice(-3)
+  const earlier = sorted.slice(0, -3)
+  const getTrend = (key: 'cough_level' | 'sputum_amount' | 'fatigue_level') => {
+    if (earlier.length === 0) return '→'
+    const recentAvg = recent3.reduce((s, r) => s + r[key], 0) / recent3.length
+    const earlierAvg = earlier.reduce((s, r) => s + r[key], 0) / earlier.length
+    const diff = recentAvg - earlierAvg
+    if (diff < -0.5) return '↓' // 개선
+    if (diff > 0.5) return '↑' // 악화
+    return '→'
+  }
+
+  return (
+    <div>
+      <p className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-2">증상 추세 ({sorted.length}일)</p>
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height: '80px' }}>
+        {/* 배경 가이드라인 */}
+        <line x1={px} y1={py + plotH * 0.5} x2={w - px} y2={py + plotH * 0.5} stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="4 4" />
+        {metrics.map(m => (
+          <path key={m.key} d={makePath(m.key)} fill="none" stroke={m.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        ))}
+      </svg>
+      <div className="flex justify-between mt-1.5">
+        {[
+          { label: '기침', avg: avgCough, trend: getTrend('cough_level'), color: 'text-amber-600' },
+          { label: '가래', avg: avgSputum, trend: getTrend('sputum_amount'), color: 'text-emerald-600' },
+          { label: '피로', avg: avgFatigue, trend: getTrend('fatigue_level'), color: 'text-violet-600' },
+        ].map(item => (
+          <div key={item.label} className="flex items-center gap-1 text-sm">
+            <span className={`font-bold ${item.color}`}>{item.label}</span>
+            <span className="text-gray-500 dark:text-gray-400">{item.avg}</span>
+            <span className={item.trend === '↓' ? 'text-emerald-500' : item.trend === '↑' ? 'text-red-500' : 'text-gray-400'}>
+              {item.trend}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-gray-400 text-center mt-1">↓개선 →유지 ↑주의 · 진료 시 보여주세요</p>
+    </div>
+  )
+}
+
 // ─── 월간 기록 달력 ──────────────────
 function MonthlyCalendar() {
   const now = new Date()
@@ -390,15 +461,15 @@ function BottomTabBar({ activeTab, onTabChange }: { activeTab: ViewType; onTabCh
         {TAB_ITEMS.map(tab => (
           <button
             key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors select-none ${
+            onClick={() => { onTabChange(tab.id); haptic('light') }}
+            className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors select-none active:scale-95 ${
               activeTab === tab.id
                 ? 'text-blue-600 dark:text-blue-400'
                 : 'text-gray-400 dark:text-gray-500'
             }`}
           >
-            <span className="text-2xl leading-none">{tab.icon}</span>
-            <span className={`text-xs font-medium ${activeTab === tab.id ? 'font-bold' : ''}`}>{tab.label}</span>
+            <span className="text-[1.7rem] leading-none">{tab.icon}</span>
+            <span className={`text-[11px] font-medium ${activeTab === tab.id ? 'font-bold' : ''}`}>{tab.label}</span>
           </button>
         ))}
       </div>
@@ -784,10 +855,42 @@ export function PatientHome() {
         {/* 빠른 메모 */}
         <QuickMemo userId={user?.id || ''} />
 
+        {/* 건강 지표 대시보드 (기록이 있을 때만) */}
+        {todayRecord && (todayRecord.temperature || todayRecord.oxygen_saturation || todayRecord.weight) && (
+          <div className="grid grid-cols-3 gap-2">
+            {todayRecord.temperature && (
+              <div className={`bg-white dark:bg-gray-800 rounded-2xl border p-3 text-center ${
+                todayRecord.temperature >= 37.5 ? 'border-red-300 dark:border-red-700' : 'border-gray-100 dark:border-gray-700'
+              }`}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">체온</p>
+                <p className={`text-xl font-bold mt-0.5 ${todayRecord.temperature >= 37.5 ? 'text-red-600' : 'text-gray-900 dark:text-gray-100'}`}>
+                  {todayRecord.temperature}°
+                </p>
+              </div>
+            )}
+            {todayRecord.oxygen_saturation && (
+              <div className={`bg-white dark:bg-gray-800 rounded-2xl border p-3 text-center ${
+                todayRecord.oxygen_saturation < 95 ? 'border-red-300 dark:border-red-700' : 'border-gray-100 dark:border-gray-700'
+              }`}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">SpO2</p>
+                <p className={`text-xl font-bold mt-0.5 ${todayRecord.oxygen_saturation < 95 ? 'text-red-600' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                  {todayRecord.oxygen_saturation}%
+                </p>
+              </div>
+            )}
+            {todayRecord.weight && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-3 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">체중</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-0.5">{todayRecord.weight}<span className="text-sm font-normal">kg</span></p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 이번 주 컨디션 (클릭 → 기록) */}
         <Card className="shadow-sm">
           <CardContent className="pt-4 pb-3">
-            <p className="text-base font-semibold text-gray-700 mb-3">이번 주 컨디션</p>
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3">이번 주 컨디션</p>
             <WeeklyChart records={recentRecords} onTap={() => setView('record')} />
           </CardContent>
         </Card>
@@ -813,6 +916,15 @@ export function PatientHome() {
             </details>
           </CardContent>
         </Card>
+
+        {/* 증상 추세 차트 (3일 이상 기록 시) */}
+        {recentRecords.length >= 3 && (
+          <Card className="shadow-sm">
+            <CardContent className="pt-4 pb-3">
+              <SymptomTrendChart records={getRecentDailyRecords(14)} />
+            </CardContent>
+          </Card>
+        )}
 
         {/* 걸음수 카운터 */}
         <Card className="shadow-sm">
