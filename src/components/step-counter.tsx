@@ -92,7 +92,7 @@ export function StepCounter() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-base font-semibold text-gray-700">오늘의 걸음수</p>
+        <p className="text-base font-semibold text-gray-700 dark:text-gray-200">오늘의 걸음수</p>
         <p className="text-sm text-gray-400">목표 {STEP_GOAL.toLocaleString()}보</p>
       </div>
 
@@ -116,7 +116,7 @@ export function StepCounter() {
           </div>
         </div>
         <div className="flex-1">
-          <p className={`text-3xl font-bold ${goalReached ? 'text-emerald-600' : 'text-gray-900'}`}>
+          <p className={`text-3xl font-bold ${goalReached ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100'}`}>
             {steps.toLocaleString()}
           </p>
           <p className="text-sm text-gray-500">
@@ -158,7 +158,7 @@ export function StepCounter() {
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleManualInput()}
             placeholder="걸음수 입력"
-            className="flex-1 h-12 px-4 rounded-2xl border border-gray-200 text-lg text-center focus:outline-none focus:border-blue-400"
+            className="flex-1 h-12 px-4 rounded-2xl border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-lg text-center focus:outline-none focus:border-blue-400"
             autoFocus
           />
           <button

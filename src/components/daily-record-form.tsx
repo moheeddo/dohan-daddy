@@ -197,8 +197,8 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
       </div>
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setValue(Math.max(0, value - 1))}
-          className="w-12 h-12 rounded-xl bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200 flex items-center justify-center flex-shrink-0 select-none"
+          onClick={() => { setValue(Math.max(0, value - 1)); haptic('light') }}
+          className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-700 text-2xl font-bold text-gray-600 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 active:scale-95 flex items-center justify-center flex-shrink-0 select-none transition-all"
         >
           −
         </button>
@@ -206,8 +206,8 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
           <Slider value={[value]} onValueChange={sliderChange(setValue)} max={max} step={1} />
         </div>
         <button
-          onClick={() => setValue(Math.min(max, value + 1))}
-          className="w-12 h-12 rounded-xl bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200 flex items-center justify-center flex-shrink-0 select-none"
+          onClick={() => { setValue(Math.min(max, value + 1)); haptic('light') }}
+          className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-700 text-2xl font-bold text-gray-600 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600 active:scale-95 flex items-center justify-center flex-shrink-0 select-none transition-all"
         >
           +
         </button>

@@ -186,7 +186,7 @@ export function MedicationTimer() {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-base font-semibold text-gray-700">오늘의 약</p>
+        <p className="text-base font-semibold text-gray-700 dark:text-gray-200">오늘의 약</p>
         <div className="flex items-center gap-2">
           <p className="text-sm text-gray-400">{takenCount}/{totalCount} 복용</p>
           <button
@@ -208,15 +208,15 @@ export function MedicationTimer() {
             key={med.id}
             className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all ${
               med.taken
-                ? 'bg-emerald-50 border border-emerald-200'
+                ? 'bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700'
                 : isNear
-                  ? 'bg-orange-50 border-2 border-orange-300 animate-pulse-slow'
-                  : 'bg-gray-50 border border-gray-100'
+                  ? 'bg-orange-50 dark:bg-orange-900/30 border-2 border-orange-300 dark:border-orange-600 animate-pulse-slow'
+                  : 'bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700'
             }`}
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-gray-900">{med.label}</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{med.label}</span>
                 <span className="text-sm text-gray-400">
                   {String(med.hour).padStart(2, '0')}:{String(med.minute).padStart(2, '0')}
                 </span>
@@ -284,8 +284,8 @@ export function MedicationTimer() {
       {showSettings && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center" onClick={() => setShowSettings(false)}>
           <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-3xl p-6 mx-4 max-w-sm w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-4">약 시간 설정</h3>
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-6 mx-4 max-w-sm w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center mb-4">약 시간 설정</h3>
 
             {/* 기존 약 목록 */}
             <div className="space-y-2 mb-4">

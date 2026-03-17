@@ -35,12 +35,12 @@ export function PinLogin() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-5">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-900 px-5">
       <div className="w-full max-w-sm">
         {/* 로고 */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🫁</div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">아버지 건강 관리</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">아버지 건강 관리</h1>
           <p className="text-base text-gray-400 mt-2">PIN 번호를 입력하세요</p>
         </div>
 
@@ -67,7 +67,7 @@ export function PinLogin() {
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(num => (
             <button
               key={num}
-              className="h-[4.5rem] rounded-2xl text-3xl font-semibold text-gray-800 bg-gray-50 active:bg-gray-200 active:scale-95 transition-all select-none"
+              className="h-[4.5rem] rounded-2xl text-3xl font-semibold text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 active:scale-95 transition-all select-none"
               onClick={() => handleNumberClick(num)}
             >
               {num}
@@ -75,7 +75,7 @@ export function PinLogin() {
           ))}
           <div />
           <button
-            className="h-[4.5rem] rounded-2xl text-3xl font-semibold text-gray-800 bg-gray-50 active:bg-gray-200 active:scale-95 transition-all select-none"
+            className="h-[4.5rem] rounded-2xl text-3xl font-semibold text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 active:scale-95 transition-all select-none"
             onClick={() => handleNumberClick('0')}
           >
             0

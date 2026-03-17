@@ -31,7 +31,9 @@ export default function Home() {
             <span className="text-4xl">🫁</span>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">아버지 건강 관리</h1>
-          <p className="text-blue-200 text-base mt-2">건강한 하루를 시작해요</p>
+          <p className="text-blue-200 text-base mt-2">
+            {new Date().getHours() < 12 ? '좋은 아침이에요 ☀️' : new Date().getHours() < 18 ? '좋은 오후예요 🌤️' : '편안한 저녁이에요 🌙'}
+          </p>
           <div className="mt-6 flex justify-center gap-1.5">
             <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
             <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

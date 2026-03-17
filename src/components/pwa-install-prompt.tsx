@@ -21,16 +21,23 @@ export function PwaInstallPrompt() {
       return
     }
 
+    const ua = navigator.userAgent
+    const isiOS = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream
+    const isSamsung = /SamsungBrowser/i.test(ua)
+    setIsIOS(isiOS)
+    setIsSamsungBrowser(isSamsung)
+
+    // 삼성 인터넷은 3시간마다, 나머지는 24시간마다 다시 표시
+    const dismissCooldown = isSamsung ? 3 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000
     const dismissed = localStorage.getItem('pwa_install_dismissed')
     if (dismissed) {
       const dismissedTime = parseInt(dismissed, 10)
-      if (Date.now() - dismissedTime < 24 * 60 * 60 * 1000) return
+      if (Date.now() - dismissedTime < dismissCooldown) return
     }
 
-    const ua = navigator.userAgent
-    const isiOS = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream
-    setIsIOS(isiOS)
-    setIsSamsungBrowser(/SamsungBrowser/i.test(ua))
+    // 방문 횟수 추적 (삼성 브라우저 첫 3회 방문 시 풀 가이드 바로 표시)
+    const visitCount = parseInt(localStorage.getItem('pwa_visit_count') || '0', 10) + 1
+    localStorage.setItem('pwa_visit_count', String(visitCount))
 
     const handler = (e: Event) => {
       e.preventDefault()
@@ -47,8 +54,12 @@ export function PwaInstallPrompt() {
     const fallbackTimer = setTimeout(() => {
       if (!isiOS && !window.matchMedia('(display-mode: standalone)').matches) {
         setShowBanner(true)
+        // 삼성 브라우저 첫 3회 방문: 풀 가이드 자동 표시
+        if (isSamsung && visitCount <= 3) {
+          setShowFullGuide(true)
+        }
       }
-    }, 3000)
+    }, 2000)
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler)
@@ -92,27 +103,35 @@ export function PwaInstallPrompt() {
             </div>
 
             {isSamsungBrowser ? (
-              <div className="space-y-6">
+              <div className="space-y-5">
+                {/* 화면 아래쪽 화살표 안내 */}
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+                  <p className="text-lg font-bold text-amber-800">👇 화면 아래쪽을 보세요!</p>
+                  <p className="text-base text-amber-600 mt-1">삼성 인터넷 메뉴 버튼이 있습니다</p>
+                </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">1</div>
+                  <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-2xl flex-shrink-0">1</div>
                   <div>
-                    <p className="text-xl font-bold text-gray-900">아래쪽 메뉴(≡) 누르기</p>
-                    <p className="text-base text-gray-500 mt-1">화면 아래쪽에 있는 세 줄(≡) 버튼을 누릅니다</p>
+                    <p className="text-xl font-bold text-gray-900">아래쪽 <span className="text-3xl">≡</span> 누르기</p>
+                    <p className="text-base text-gray-500 mt-1">화면 맨 아래에 있는 <span className="font-bold">세 줄(≡) 버튼</span>을 누릅니다</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">2</div>
+                  <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-2xl flex-shrink-0">2</div>
                   <div>
                     <p className="text-xl font-bold text-gray-900">&quot;현재 페이지 추가&quot; 누르기</p>
-                    <p className="text-base text-gray-500 mt-1">메뉴에서 <span className="font-bold text-blue-600">&quot;현재 페이지 추가&quot;</span>를 찾아 누릅니다</p>
+                    <p className="text-base text-gray-500 mt-1">메뉴에서 <span className="font-bold text-blue-600 text-lg">&quot;현재 페이지 추가&quot;</span>를 찾아 누릅니다</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">3</div>
+                  <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-2xl flex-shrink-0">3</div>
                   <div>
-                    <p className="text-xl font-bold text-gray-900">&quot;홈 화면&quot; 선택</p>
-                    <p className="text-base text-gray-500 mt-1"><span className="font-bold text-blue-600">&quot;홈 화면&quot;</span>을 눌러 바로가기를 만듭니다</p>
+                    <p className="text-xl font-bold text-gray-900">&quot;홈 화면&quot; 선택하면 끝!</p>
+                    <p className="text-base text-gray-500 mt-1"><span className="font-bold text-emerald-600 text-lg">&quot;홈 화면&quot;</span>을 눌러 바로가기를 만듭니다</p>
                   </div>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+                  <p className="text-lg font-bold text-emerald-700">완료 후 바탕화면에 아이콘이 생겨요! 📲</p>
                 </div>
               </div>
             ) : isIOS ? (

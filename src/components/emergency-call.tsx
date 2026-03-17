@@ -75,10 +75,10 @@ export function EmergencyCall() {
         return (
           <div className="fixed inset-0 z-[70] flex items-center justify-center" onClick={() => setConfirmCall(null)}>
             <div className="absolute inset-0 bg-black/40" />
-            <div className="relative bg-white rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
               <p className="text-5xl text-center mb-3">{contact.emoji}</p>
-              <h3 className="text-xl font-bold text-gray-900 text-center mb-1">{contact.label}</h3>
-              <p className="text-lg text-gray-500 text-center mb-5">{phone}</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center mb-1">{contact.label}</h3>
+              <p className="text-lg text-gray-500 dark:text-gray-400 text-center mb-5">{phone}</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmCall(null)}
@@ -110,14 +110,14 @@ export function EmergencyCall() {
       {editingId && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center" onClick={() => setEditingId(null)}>
           <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-4">전화번호 등록</h3>
+          <div className="relative bg-white dark:bg-gray-800 rounded-3xl p-6 mx-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 text-center mb-4">전화번호 등록</h3>
             <input
               type="tel"
               value={editPhone}
               onChange={e => setEditPhone(e.target.value)}
               placeholder="010-0000-0000"
-              className="w-full h-14 px-4 rounded-2xl border-2 border-gray-200 text-xl text-center focus:border-blue-500 focus:outline-none"
+              className="w-full h-14 px-4 rounded-2xl border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-xl text-center focus:border-blue-500 focus:outline-none"
               autoFocus
             />
             <div className="flex gap-3 mt-4">
