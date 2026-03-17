@@ -24,6 +24,7 @@ export interface DailyRecord {
   fatigue_level: number // 0-10
   temperature?: number
   weight?: number
+  oxygen_saturation?: number // SpO2 (%)
   dumping_symptom: boolean
   mood: number // 1-5
   notes?: string

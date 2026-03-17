@@ -14,6 +14,8 @@ import { DataBackup } from '@/components/data-backup'
 import { MedicationTimer } from '@/components/medication-timer'
 import { haptic } from '@/lib/haptic'
 import { FontSizeSelector } from '@/components/font-size-control'
+import { EmergencyCall } from '@/components/emergency-call'
+import { StepCounter } from '@/components/step-counter'
 import {
   getDailyRecordByDate,
   getRecentDailyRecords,
@@ -375,6 +377,7 @@ export function PatientHome() {
   const [yesterdayMissed, setYesterdayMissed] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [quickSaved, setQuickSaved] = useState(false)
+  const [showBackupReminder, setShowBackupReminder] = useState(false)
 
   const loadData = () => {
     const today = getTodayString()
@@ -398,11 +401,23 @@ export function PatientHome() {
   // 알림 권한 요청 + 진료일 리마인더
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
-      // 앱 사용 3초 후 알림 권한 요청
       const timer = setTimeout(() => {
         Notification.requestPermission()
       }, 3000)
       return () => clearTimeout(timer)
+    }
+  }, [])
+
+  // 자동 백업 리마인더 (7일마다)
+  useEffect(() => {
+    const lastBackup = localStorage.getItem('daddy_last_backup')
+    if (!lastBackup) {
+      // 백업한 적 없으면 리마인더
+      const records = getRecentDailyRecords(3)
+      if (records.length >= 3) setShowBackupReminder(true)
+    } else {
+      const daysSince = Math.floor((Date.now() - parseInt(lastBackup, 10)) / (1000 * 60 * 60 * 24))
+      if (daysSince >= 7) setShowBackupReminder(true)
     }
   }, [])
 
@@ -534,6 +549,7 @@ export function PatientHome() {
               <p className="text-base font-medium text-white/90">오늘의 컨디션</p>
               <p className="text-sm text-blue-200">
                 기침 {todayRecord.cough_level} · 가래 {todayRecord.sputum_amount} · 피로 {todayRecord.fatigue_level}
+                {todayRecord.oxygen_saturation ? ` · SpO2 ${todayRecord.oxygen_saturation}%` : ''}
               </p>
             </div>
           </div>
@@ -565,6 +581,23 @@ export function PatientHome() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 -mt-5 space-y-3">
+        {/* 백업 리마인더 */}
+        {showBackupReminder && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+            <span className="text-2xl">💾</span>
+            <div className="flex-1">
+              <p className="text-base font-medium text-amber-800">데이터 백업을 해주세요</p>
+              <p className="text-sm text-amber-600">소중한 건강 기록을 안전하게 보관합니다</p>
+            </div>
+            <button
+              onClick={() => { setView('backup'); setShowBackupReminder(false) }}
+              className="text-sm font-bold text-amber-700 bg-amber-200 px-3 py-1.5 rounded-xl active:bg-amber-300 flex-shrink-0"
+            >
+              백업
+            </button>
+          </div>
+        )}
+
         {/* 어제 미기록 안내 (부드러운 톤) */}
         {yesterdayMissed && !todayRecord && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-center">
@@ -618,6 +651,13 @@ export function PatientHome() {
                 <MonthlyCalendar />
               </div>
             </details>
+          </CardContent>
+        </Card>
+
+        {/* 걸음수 카운터 */}
+        <Card className="shadow-sm">
+          <CardContent className="pt-4 pb-3">
+            <StepCounter />
           </CardContent>
         </Card>
 
@@ -705,6 +745,12 @@ export function PatientHome() {
             </div>
           )
         })()}
+
+        {/* 긴급 전화 */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4">
+          <p className="text-base font-semibold text-gray-700 mb-2">긴급 연락처</p>
+          <EmergencyCall />
+        </div>
 
         {/* 설정 영역 */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 space-y-3">

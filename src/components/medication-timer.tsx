@@ -12,23 +12,51 @@ interface MedTime {
   takenAt?: string
 }
 
-const DEFAULT_MEDICATIONS: Omit<MedTime, 'taken' | 'takenAt'>[] = [
+interface MedSchedule {
+  id: string
+  label: string
+  hour: number
+  minute: number
+}
+
+const DEFAULT_MEDICATIONS: MedSchedule[] = [
   { id: 'morning', label: '아침 약', hour: 8, minute: 0 },
   { id: 'lunch', label: '점심 약', hour: 13, minute: 0 },
   { id: 'dinner', label: '저녁 약', hour: 19, minute: 0 },
 ]
+
+function getMedSchedule(): MedSchedule[] {
+  if (typeof window === 'undefined') return DEFAULT_MEDICATIONS
+  try {
+    const saved = localStorage.getItem('daddy_med_schedule')
+    if (saved) return JSON.parse(saved)
+  } catch { /* ignore */ }
+  return DEFAULT_MEDICATIONS
+}
+
+function saveMedSchedule(schedule: MedSchedule[]) {
+  localStorage.setItem('daddy_med_schedule', JSON.stringify(schedule))
+}
 
 function getTodayKey() {
   return `med_taken_${new Date().toISOString().split('T')[0]}`
 }
 
 function loadTodayMeds(): MedTime[] {
-  if (typeof window === 'undefined') return DEFAULT_MEDICATIONS.map(m => ({ ...m, taken: false }))
+  if (typeof window === 'undefined') return getMedSchedule().map(m => ({ ...m, taken: false }))
   try {
     const saved = localStorage.getItem(getTodayKey())
-    if (saved) return JSON.parse(saved)
+    if (saved) {
+      const savedMeds: MedTime[] = JSON.parse(saved)
+      // 스케줄과 병합 (새 약 추가 / 삭제된 약 제거)
+      const schedule = getMedSchedule()
+      return schedule.map(s => {
+        const existing = savedMeds.find(m => m.id === s.id)
+        return existing ? { ...s, taken: existing.taken, takenAt: existing.takenAt } : { ...s, taken: false }
+      })
+    }
   } catch { /* ignore */ }
-  return DEFAULT_MEDICATIONS.map(m => ({ ...m, taken: false }))
+  return getMedSchedule().map(m => ({ ...m, taken: false }))
 }
 
 function saveTodayMeds(meds: MedTime[]) {
@@ -38,17 +66,20 @@ function saveTodayMeds(meds: MedTime[]) {
 export function MedicationTimer() {
   const [meds, setMeds] = useState<MedTime[]>(loadTodayMeds)
   const [now, setNow] = useState(new Date())
+  const [showSettings, setShowSettings] = useState(false)
+  const [editSchedule, setEditSchedule] = useState<MedSchedule[]>([])
+  const [newLabel, setNewLabel] = useState('')
+  const [newHour, setNewHour] = useState('12')
+  const [newMinute, setNewMinute] = useState('00')
 
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date())
-      // 매 분마다 약 복용 알림 체크
       checkMedNotifications()
     }, 60000)
     return () => clearInterval(timer)
   }, [])
 
-  // 약 복용 시간에 브라우저 알림
   const checkMedNotifications = useCallback(() => {
     if (typeof window === 'undefined') return
     if (!('Notification' in window) || Notification.permission !== 'granted') return
@@ -60,7 +91,6 @@ export function MedicationTimer() {
 
     currentMeds.forEach(med => {
       if (med.taken) return
-      // 정확히 약 복용 시간이거나 5분 후일 때 알림
       if (med.hour === currentHour && (currentMinute === med.minute || currentMinute === med.minute + 5)) {
         const notifKey = `med_notif_${med.id}_${now.toISOString().split('T')[0]}_${currentMinute}`
         if (!sessionStorage.getItem(notifKey)) {
@@ -96,6 +126,36 @@ export function MedicationTimer() {
     })
   }, [])
 
+  const openSettings = () => {
+    setEditSchedule([...getMedSchedule()])
+    setShowSettings(true)
+  }
+
+  const handleAddMed = () => {
+    if (!newLabel.trim()) return
+    const id = `med_${Date.now()}`
+    setEditSchedule(prev => [...prev, {
+      id,
+      label: newLabel.trim(),
+      hour: parseInt(newHour, 10),
+      minute: parseInt(newMinute, 10),
+    }])
+    setNewLabel('')
+    setNewHour('12')
+    setNewMinute('00')
+  }
+
+  const handleDeleteMed = (id: string) => {
+    setEditSchedule(prev => prev.filter(m => m.id !== id))
+  }
+
+  const handleSaveSchedule = () => {
+    saveMedSchedule(editSchedule)
+    setMeds(loadTodayMeds())
+    setShowSettings(false)
+    haptic('success')
+  }
+
   const takenCount = meds.filter(m => m.taken).length
   const totalCount = meds.length
 
@@ -103,7 +163,15 @@ export function MedicationTimer() {
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-1">
         <p className="text-base font-semibold text-gray-700">오늘의 약</p>
-        <p className="text-sm text-gray-400">{takenCount}/{totalCount} 복용</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-gray-400">{takenCount}/{totalCount} 복용</p>
+          <button
+            onClick={openSettings}
+            className="text-sm text-blue-500 py-1 px-2 rounded-lg active:bg-blue-50"
+          >
+            설정
+          </button>
+        </div>
       </div>
       {meds.map(med => {
         const medTime = new Date()
@@ -156,6 +224,89 @@ export function MedicationTimer() {
           </div>
         )
       })}
+
+      {/* 약 스케줄 설정 모달 */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center" onClick={() => setShowSettings(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-3xl p-6 mx-4 max-w-sm w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-4">약 시간 설정</h3>
+
+            {/* 기존 약 목록 */}
+            <div className="space-y-2 mb-4">
+              {editSchedule.map(med => (
+                <div key={med.id} className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                  <span className="text-base font-medium text-gray-800 flex-1">{med.label}</span>
+                  <span className="text-base text-gray-500">
+                    {String(med.hour).padStart(2, '0')}:{String(med.minute).padStart(2, '0')}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteMed(med.id)}
+                    className="text-red-400 text-lg px-2 py-1 active:text-red-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* 새 약 추가 */}
+            <div className="border-t border-gray-100 pt-4 mb-4">
+              <p className="text-sm font-medium text-gray-500 mb-2">새 약 추가</p>
+              <input
+                type="text"
+                value={newLabel}
+                onChange={e => setNewLabel(e.target.value)}
+                placeholder="약 이름 (예: 비타민D)"
+                className="w-full h-12 px-4 rounded-xl border border-gray-200 text-base mb-2 focus:outline-none focus:border-blue-400"
+              />
+              <div className="flex items-center gap-2 mb-2">
+                <select
+                  value={newHour}
+                  onChange={e => setNewHour(e.target.value)}
+                  className="flex-1 h-12 px-3 rounded-xl border border-gray-200 text-base text-center bg-white"
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>{String(i).padStart(2, '0')}시</option>
+                  ))}
+                </select>
+                <span className="text-gray-400 text-xl">:</span>
+                <select
+                  value={newMinute}
+                  onChange={e => setNewMinute(e.target.value)}
+                  className="flex-1 h-12 px-3 rounded-xl border border-gray-200 text-base text-center bg-white"
+                >
+                  {[0, 15, 30, 45].map(m => (
+                    <option key={m} value={m}>{String(m).padStart(2, '0')}분</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleAddMed}
+                  disabled={!newLabel.trim()}
+                  className="h-12 px-4 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-40 active:scale-95 transition"
+                >
+                  추가
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="flex-1 h-14 rounded-2xl bg-gray-100 text-lg font-semibold text-gray-700 active:bg-gray-200"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSaveSchedule}
+                className="flex-1 h-14 rounded-2xl bg-blue-600 text-lg font-semibold text-white active:bg-blue-700"
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

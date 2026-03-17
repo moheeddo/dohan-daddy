@@ -71,6 +71,7 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
   const [fatigueLevel, setFatigueLevel] = useState(3)
   const [temperature, setTemperature] = useState('')
   const [weight, setWeight] = useState('')
+  const [oxygenSaturation, setOxygenSaturation] = useState('')
   const [dumpingSymptom, setDumpingSymptom] = useState(false)
   const [mood, setMood] = useState(3)
   const [notes, setNotes] = useState('')
@@ -106,6 +107,7 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
       setFatigueLevel(existing.fatigue_level)
       if (existing.temperature) setTemperature(String(existing.temperature))
       if (existing.weight) setWeight(String(existing.weight))
+      if (existing.oxygen_saturation) setOxygenSaturation(String(existing.oxygen_saturation))
       setDumpingSymptom(existing.dumping_symptom)
       setMood(existing.mood)
       if (existing.notes) setNotes(existing.notes)
@@ -140,6 +142,7 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
       fatigue_level: fatigueLevel,
       temperature: temperature ? parseFloat(temperature) : undefined,
       weight: weight ? parseFloat(weight) : undefined,
+      oxygen_saturation: oxygenSaturation ? parseFloat(oxygenSaturation) : undefined,
       dumping_symptom: dumpingSymptom,
       mood,
       notes: notes || undefined,
@@ -329,6 +332,30 @@ export function DailyRecordForm({ onSaved }: DailyRecordFormProps) {
                     />
                     <span className="text-lg text-gray-500">kg</span>
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-lg font-medium text-gray-700 block mb-1">산소포화도 (SpO2)</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    step="1"
+                    min="70"
+                    max="100"
+                    placeholder="97"
+                    value={oxygenSaturation}
+                    onChange={e => setOxygenSaturation(e.target.value)}
+                    className="h-14 text-xl text-center w-28"
+                  />
+                  <span className="text-lg text-gray-500">%</span>
+                  <span className="text-sm text-gray-400 flex-1">
+                    {oxygenSaturation && parseFloat(oxygenSaturation) < 95
+                      ? '⚠️ 95% 미만 주의'
+                      : oxygenSaturation && parseFloat(oxygenSaturation) >= 95
+                        ? '✅ 정상'
+                        : '손가락 산소측정기로 측정'}
+                  </span>
                 </div>
               </div>
 

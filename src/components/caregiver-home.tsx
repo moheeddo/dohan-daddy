@@ -77,6 +77,7 @@ function AlertBanner({ records }: { records: DailyRecord[] }) {
     if (todayRecord.breathing_difficulty >= 7) alerts.push(`호흡곤란 수준이 높습니다 (${todayRecord.breathing_difficulty}/10)`)
     if (todayRecord.sputum_color === 'bloody') alerts.push('가래에 피가 섞여 있습니다')
     if (todayRecord.temperature && todayRecord.temperature >= 37.5) alerts.push(`체온이 높습니다 (${todayRecord.temperature}°C)`)
+    if (todayRecord.oxygen_saturation && todayRecord.oxygen_saturation < 95) alerts.push(`산소포화도가 낮습니다 (${todayRecord.oxygen_saturation}%)`)
     if (todayRecord.overall_condition === 1) alerts.push('오늘 컨디션이 안 좋습니다')
   }
 
@@ -257,6 +258,11 @@ export function CaregiverHome() {
                     )}
                     {todayRecord.weight && (
                       <p className="text-sm text-gray-600">체중: {todayRecord.weight}kg</p>
+                    )}
+                    {todayRecord.oxygen_saturation && (
+                      <p className={`text-sm ${todayRecord.oxygen_saturation < 95 ? 'text-red-600 font-bold' : 'text-gray-600'}`}>
+                        SpO2: {todayRecord.oxygen_saturation}% {todayRecord.oxygen_saturation < 95 ? '⚠️' : ''}
+                      </p>
                     )}
                     {todayRecord.dumping_symptom && (
                       <Badge variant="destructive">덤핑증상 있음</Badge>

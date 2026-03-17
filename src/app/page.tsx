@@ -1,14 +1,27 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { PinLogin } from '@/components/pin-login'
 import { PatientHome } from '@/components/patient-home'
 import { CaregiverHome } from '@/components/caregiver-home'
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt'
 import { OfflineIndicator } from '@/components/offline-indicator'
+import { WelcomeOnboarding } from '@/components/welcome-onboarding'
 
 export default function Home() {
   const { user, isLoading } = useAuth()
+  const [showOnboarding, setShowOnboarding] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const done = localStorage.getItem('daddy_onboarding_done')
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      if (!done && !isStandalone) {
+        setShowOnboarding(true)
+      }
+    }
+  }, [])
 
   if (isLoading) {
     return (
@@ -29,30 +42,19 @@ export default function Home() {
     )
   }
 
-  if (!user) {
-    return (
-      <>
-        <OfflineIndicator />
-        <PinLogin />
-        <PwaInstallPrompt />
-      </>
-    )
-  }
-
-  if (user.role === 'patient') {
-    return (
-      <>
-        <OfflineIndicator />
-        <PatientHome />
-        <PwaInstallPrompt />
-      </>
-    )
-  }
-
   return (
     <>
       <OfflineIndicator />
-      <CaregiverHome />
+      {showOnboarding && (
+        <WelcomeOnboarding onComplete={() => setShowOnboarding(false)} />
+      )}
+      {!user ? (
+        <PinLogin />
+      ) : user.role === 'patient' ? (
+        <PatientHome />
+      ) : (
+        <CaregiverHome />
+      )}
       <PwaInstallPrompt />
     </>
   )
